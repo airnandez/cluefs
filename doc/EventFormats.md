@@ -55,7 +55,7 @@ Click on the links below to get more details on the event format for the corresp
 - [`access(2)`](#access)
 - [`close(2)`](#close)
 - [`creat(2)`](#creat)
-- [flush OK](#flush)
+- [flush](#flush)
 - [`getxattr(2)`](#getxattr)
 - [`listxattr(2)`](#listxattr)
 - [`mkdir(2)`](#mkdir)
