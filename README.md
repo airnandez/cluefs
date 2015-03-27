@@ -104,7 +104,7 @@ Your contribution is more than welcome. There are several ways you can help:
 * Providing feedback on how to improve this software [by opening an issue](https://github.com/airnandez/cluefs/issues)
 
 ## Roadmap
-The items in our to-do list are [documented separately](doc/TODO.md).
+The items in our to-do list are [documented separately](doc/ToDo.md).
 
 
 ## Disclaimer
