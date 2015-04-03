@@ -15,13 +15,12 @@ func main() {
 	var tracer Tracer
 	destFile := conf.GetTraceDestination()
 	switch conf.GetOutputFormat() {
-	case "json":
-		tracer, err = NewJSONTracer(destFile)
-
 	default:
 		fallthrough
 	case "csv":
 		tracer, err = NewCSVTracer(destFile)
+	case "json":
+		tracer, err = NewJSONTracer(destFile)
 	}
 	if err != nil {
 		errlog.Printf("%s", err)
