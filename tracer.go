@@ -77,6 +77,22 @@ func (t *JSONTracer) Trace(op FsOperTracer) {
 	t.receptionChan <- op
 }
 
+func NewTracer(kind, fileName string) (Tracer, error) {
+	var (
+		tracer Tracer
+		err    error
+	)
+	switch kind {
+	default:
+		fallthrough
+	case "csv":
+		tracer, err = NewCSVTracer(fileName)
+	case "json":
+		tracer, err = NewJSONTracer(fileName)
+	}
+	return tracer, err
+}
+
 func openTraceDestination(filePath string) (*os.File, error) {
 	destFile := os.Stdout
 	if len(filePath) > 0 && filePath != "-" {
