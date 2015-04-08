@@ -36,7 +36,7 @@ func init() {
 	prefixFormat = formatMap[isTerminal(os.Stderr)]
 
 	// Set the debug level from the environmental variable
-	if env := os.Getenv("TRACEFS_DEBUG"); env != "" {
+	if env := os.Getenv("CLUEFS_DEBUG"); env != "" {
 		if value, err := strconv.ParseInt(env, 10, 32); err == nil {
 			debugLevel = clamp(int(value), 0, 5)
 		}
