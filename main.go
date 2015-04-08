@@ -12,30 +12,21 @@ func main() {
 	}
 
 	// Create the tracer
-	var tracer Tracer
-	destFile := conf.GetTraceDestination()
-	switch conf.GetOutputFormat() {
-	default:
-		fallthrough
-	case "csv":
-		tracer, err = NewCSVTracer(destFile)
-	case "json":
-		tracer, err = NewJSONTracer(destFile)
-	}
+	tracer, err := NewTracer(conf.GetOutputFormat(), conf.GetTraceDestination())
 	if err != nil {
 		errlog.Printf("%s", err)
 		os.Exit(2)
 	}
 
 	// Create the file system object
-	tfs, err := NewClueFS(conf.GetShadowDir(), tracer)
+	cfs, err := NewClueFS(conf.GetShadowDir(), tracer)
 	if err != nil {
 		errlog.Printf("could not create file system [%s]", err)
 		os.Exit(2)
 	}
 
 	// Mount and serve file system requests
-	if err = tfs.MountAndServe(conf.GetMountPoint(), conf.GetReadOnly()); err != nil {
+	if err = cfs.MountAndServe(conf.GetMountPoint(), conf.GetReadOnly()); err != nil {
 		errlog.Printf("could not mount file system [%s]", err)
 		os.Exit(3)
 	}
