@@ -26,4 +26,5 @@ _testmain.go
 # This project
 cluefs
 .DS_Store
+*.tar.gz
 misc/
