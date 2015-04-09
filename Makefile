@@ -1,6 +1,6 @@
 OS   := $(shell uname -a | cut -f 1 -d ' ' | tr [:upper:] [:lower:])
 ARCH := $(shell uname -m)
-TAG  := $(shell git describe master --tags)
+TAG  := $(shell git tag)
 
 all: build release
 
