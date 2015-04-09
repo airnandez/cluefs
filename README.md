@@ -68,29 +68,37 @@ $ sudo umount /tmp/trace
 This utility is tested on [Scientific Linux](https://www.scientificlinux.org/) v6 and v7, [Ubuntu](http://www.ubuntu.com/) v14.04, [CentOS](http://www.centos.org) v7  and [MacOS X](https://www.apple.com/osx/) v10.9. It is possible `cluefs` also works on other systems or other versions of those operating systems where its dependencies are satisfied (see below).
 
 ### Dependencies
-In order to build `cluefs` from sources you need *Filesystem in Userspace (FUSE)* installed on your system and also a C compiler. To install them, use one of the commands below according to your system:
+To use `cluefs` you need *Filesystem in Userspace (FUSE)* installed on your system. To to that, please follow the installation instructions for your operating system according in the table below:
 
-| Operating system  | Installation instructions |
+| To install FUSE on ...  | ... follow the instructions below |
 | ----------------- |  ------------ |
-| Ubuntu         |  `$ sudo apt-get --yes install fuse gcc` |
-| Scientific Linux, CentOS    |  `$ sudo yum install --assumeyes fuse gcc` |
-| MacOS X        |  install 1) the latest stable version of [FUSE for OS X](https://osxfuse.github.io/) and 2) [Xcode](https://developer.apple.com/xcode/downloads/), including the Xcode command line tools|
+| Ubuntu         |  `$ sudo apt-get --yes install fuse` |
+| Scientific Linux, CentOS    |  `$ sudo yum install --assumeyes fuse` |
+| MacOS X        |   install the latest stable version of [FUSE for OS X](https://osxfuse.github.io/) |
+
+In addition, if you intend to build this software from sources you need 1) the [Go programming language](https://golang.org/) tool chain and 2) a C compiler. To install the Go tool chain please follow these [detailed instructions](http://golang.org/doc/install). To install a C compiler please do:
+
+| To install C compiler on ...  | ... follow the instructions below |
+| ----------------- |  ------------ |
+| Ubuntu         |  `$ sudo apt-get --yes install gcc` |
+| Scientific Linux, CentOS    |  `$ sudo yum install --assumeyes gcc` |
+| MacOS X        |  download and install [Xcode](https://developer.apple.com/xcode/downloads/), including its command line tools|
 
 ### Installation
-The easiest way to install `cluefs` is using the [Go programming language](https://golang.org/) tool chain. If you have Go tool chain installed in your system just do:
+The easiest way to install this tool is to download one of the available ready-to-use binary files for your target execution platform. Those files are self-contained so you only need to download, unpack and you are ready to start using the tool.
+
+To install binaries, **download** one of the available releases [here](https://github.com/airnandez/cluefs/releases).
+
+To **build** from sources do:
 
 ```
 go get -u github.com/airnandez/cluefs
 ```
 
-It that is not your case, you may want to consider installing Go by following these [detailed instructions](http://golang.org/doc/install).
-
-**Note**: *for your convenience, we intend to make available ready-to-use executable files you can download and use on your system. This is in our to-do list.*
-
 ## How this utility works
-`cluefs` implements a synthetized file system which exposes all the files and directories existing on the *shadow* file system. It intercepts each system call (e.g. `open`, `read`, etc.), emits a trace event about the call and forwards the operation to the appropriate file system for execution. `cluefs` collects the result of the operation and returns it to the calling application.
+`cluefs` implements a synthesized file system which exposes all the files and directories existing on the underlying *shadow* file system. It intercepts each system call (e.g. `open`, `read`, etc.), emits a trace event about the call and forwards the operation to the appropriate file system for execution.`cluefs` collects the result of the operation and returns it to the calling application.
 
-Although special attention has been given to make this utility as lightweight as possible, it is not intended to be permanently run in heavy-load I/O environments as there is an inherent non-zero performance penalty.
+Although special attention has been given to make this utility as lightweight as possible, it is not intended to be permanently run in heavy-load I/O environments as there is an intrinsic non-zero performance penalty.
 
 ## Known limitations
 Currently, lock-related file system operations are not supported by `cluefs`. That is, it does not emit traces for those operations and makes them appear as unsupported by the file system. These are the operations induced by calling the `fcntl(3)` file system call using as second argument any of the values `F_GETLK`, `F_SETLK` or `F_SETLKW`.
