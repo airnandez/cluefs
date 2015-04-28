@@ -14,6 +14,12 @@ import (
 	"golang.org/x/net/context"
 )
 
+// This is a temporal fix: don't rewrite the targets of symbolic links by
+// default. Some applications check when they create a symbolic link that
+// the value they specified as target is actually the one the file system uses.
+// TODO: this should be a configurable feature for the ClueFS.
+const rewriteSymlinkTargets = false
+
 var skipDirEntry func(n string) bool
 
 func init() {
@@ -160,21 +166,31 @@ func (d *Dir) Symlink(ctx context.Context, req *fuse.SymlinkRequest) (fusefs.Nod
 	targetIsDir := false
 	defer trace(NewSymlinkOp(req, absNewName, req.Target, targetIsDir))
 
-	// Make sure the target of the symbolic link we will create is kept
-	// within the boundaries of the shadow file system. This is necessary
-	// in order for the link not to be broken when ClueFS is unmounted
+	linkTarget, absTarget := req.Target, req.Target
+	if rewriteSymlinkTargets {
+		// Make sure the target of the symbolic link which will be created
+		// is jailed within the boundaries of the shadow file system. That is,
+		// the link target path file name uses a path under the shadow file
+		// system and not under this file system mount point.
+		// The goal of this is for the symbolic link not to be broken when
+		// ClueFS is unmounted.
 
-	// Replace this file system mount directory by the target directory
-	// in the link target path. Do this only when the link target an
-	// absolute path
-	linkTarget := req.Target
-	absTarget := linkTarget
-	if !filepath.IsAbs(req.Target) {
-		absTarget = filepath.Join(d.path, req.Target)
-	}
-	if strings.HasPrefix(absTarget, d.fs.mountDir) {
-		absTarget = strings.Replace(absTarget, d.fs.mountDir, d.fs.shadowDir, 1)
-		linkTarget = absTarget
+		// In the link target path, replace this file system's mount directory by
+		// the corresponding directory in the shadow file system. Do this
+		// rewriting of the symbolic link target path only when the target
+		// of the symbolic link an absolute path. When it is a relative path,
+		// it will be considered to be relative to the directory when the
+		// symbolic link is created.
+		if !filepath.IsAbs(req.Target) {
+			absTarget = filepath.Join(d.path, req.Target)
+		}
+
+		// If the link target path is under the mount directory, rewrite it
+		// to be under the shadow directory
+		if strings.HasPrefix(absTarget, d.fs.mountDir) {
+			absTarget = strings.Replace(absTarget, d.fs.mountDir, d.fs.shadowDir, 1)
+			linkTarget = absTarget
+		}
 	}
 
 	// Does the link target actually exist?
