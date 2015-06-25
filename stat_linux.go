@@ -37,18 +37,19 @@ func statToFuseAttr(st syscall.Stat_t) fuse.Attr {
 	}
 	perm := os.FileMode(st.Mode) & os.ModePerm
 	return fuse.Attr{
-		Inode:  uint64(st.Ino),
-		Size:   uint64(st.Size),
-		Blocks: uint64(st.Blocks),
-		Atime:  timespecToTime(st.Atim),
-		Mtime:  timespecToTime(st.Mtim),
-		Ctime:  timespecToTime(st.Ctim),
-		Crtime: timespecToTime(st.Ctim),
-		Mode:   perm | mode,
-		Nlink:  uint32(st.Nlink),
-		Uid:    st.Uid,
-		Gid:    st.Gid,
-		Rdev:   uint32(st.Rdev), //TODO: how to correctly convert from Stat_t (64bits) to RDev (32bits)
+		Inode:     uint64(st.Ino),
+		Size:      uint64(st.Size),
+		Blocks:    uint64(st.Blocks),
+		Atime:     timespecToTime(st.Atim),
+		Mtime:     timespecToTime(st.Mtim),
+		Ctime:     timespecToTime(st.Ctim),
+		Crtime:    timespecToTime(st.Ctim),
+		Mode:      perm | mode,
+		Nlink:     uint32(st.Nlink),
+		Uid:       st.Uid,
+		Gid:       st.Gid,
+		Rdev:      uint32(st.Rdev), //TODO: how to correctly convert from Stat_t (64bits) to RDev (32bits)
+		BlockSize: uint32(st.Blksize),
 	}
 }
 

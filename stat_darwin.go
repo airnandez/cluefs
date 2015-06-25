@@ -49,7 +49,9 @@ func statToFuseAttr(st syscall.Stat_t) fuse.Attr {
 		Uid:    st.Uid,
 		Gid:    st.Gid,
 		Rdev:   uint32(st.Rdev), //TODO: how to correctly convert from Stat_t (64bits) to RDev (32bits)
-		// Flags: ???
+		// TODO: set Flags
+		// Flags:
+		BlockSize: uint32(st.Blksize),
 	}
 }
 
