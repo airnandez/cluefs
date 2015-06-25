@@ -1,4 +1,4 @@
-# cluefs — a tool for tracing I/O activity at the file system level
+# clueFS — a tool for tracing I/O activity at the file system level
 
 ## Overview
 `cluefs` is a lightweight utility to collect data on the I/O events induced by an application when interacting with a file system. It emits detailed, machine-parseable data on every file system-level operation.
@@ -13,10 +13,10 @@ However, `cluefs` does not depend on LSST software system and can be used in sev
 Although there are several tools for tracing system activity such as [strace](http://en.wikipedia.org/wiki/Strace), [DTrace](http://en.wikipedia.org/wiki/DTrace), [SystemTap](https://sourceware.org/systemtap/wiki) or [sysdig](http://www.sysdig.org/), for different reasons none of them was considered suitable for our particular use case.
 
 ## How to use
-Suppose you want to observe what file operations the command `cat $HOME/data/hello.txt` induces on the file system where the argument file is located. You can use `cluefs` to expose the contents under the directory `$HOME/data` (the *shadow* directory) through a synthetized file system mounted on `/tmp/trace`. To mount the file system use the command:
+Let's suppose you want to observe what file operations the command `cat $HOME/data/hello.txt` induces on the file system where the argument file is located. You can use `cluefs` to expose the contents under the directory `$HOME/data` (the *shadow* directory) through a synthetized file system mounted on say `/tmp/trace`. To mount the file system use the command:
 
 ```bash
-$ cluefs --mount=/tmp/trace --shadow=$HOME/data  &
+$ cluefs --shadow=$HOME/data  --mount=/tmp/trace &
 ```
 Once the file system is successfully mounted, when an application accesses a file or directory under `/tmp/trace`, `cluefs` emits an event for every call to the file system (e.g. `access`, `open`, `read`, `close`, etc.). For instance, the command:
 
@@ -76,7 +76,12 @@ To use `cluefs` you need *Filesystem in Userspace (FUSE)* installed on your syst
 | Scientific Linux, CentOS    |  `$ sudo yum install --assumeyes fuse` |
 | MacOS X        |   install the latest stable version of [FUSE for OS X](https://osxfuse.github.io/) |
 
-In addition, if you intend to build this software from sources you need 1) the [Go programming language](https://golang.org/) tool chain and 2) a C compiler. To install the Go tool chain please follow these [detailed instructions](http://golang.org/doc/install). To install a C compiler please do:
+In addition, if you intend to build this software from sources you need both:
+
+* the [Go programming language](https://golang.org/) tool chain, and
+* a C compiler.
+
+To install the Go tool chain please follow these [detailed instructions](http://golang.org/doc/install). To install a C compiler please refer to the table below:
 
 | To install C compiler on ...  | ... follow the instructions below |
 | ----------------- |  ------------ |
@@ -85,11 +90,11 @@ In addition, if you intend to build this software from sources you need 1) the [
 | MacOS X        |  download and install [Xcode](https://developer.apple.com/xcode/downloads/), including its command line tools|
 
 ### Installation
-The easiest way to install this tool is to download one of the available ready-to-use binary files for your target execution platform. Those files are self-contained so you only need to download, unpack and you are ready to start using the tool.
+The recommended way to install this tool is to download one of the ready-to-use binary files available for your target execution platform. Those are self-contained executable files so you only need to download, unpack and you are ready to start using the tool.
 
-To install binaries, **download** one of the available releases [here](https://github.com/airnandez/cluefs/releases).
+[**Download binary releases here**](https://github.com/airnandez/cluefs/releases).
 
-To **build** from sources do:
+Alternatively, to **build from sources** do:
 
 ```
 go get -u github.com/airnandez/cluefs
