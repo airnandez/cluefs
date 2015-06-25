@@ -32,10 +32,11 @@ func (n Node) String() string {
 	return fmt.Sprintf("%s %s", n.parent, n.name)
 }
 
-func (n *Node) Attr(attr *fuse.Attr) {
+func (n *Node) Attr(ctx context.Context, attr *fuse.Attr) error {
 	var st syscall.Stat_t
 	syscall.Lstat(n.path, &st)
 	*attr = statToFuseAttr(st)
+	return nil
 }
 
 func (n *Node) Access(ctx context.Context, req *fuse.AccessRequest) error {
@@ -93,8 +94,7 @@ func (n *Node) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse
 	if err != nil {
 		return osErrorToFuseError(err)
 	}
-	n.Attr(&resp.Attr)
-	return nil
+	return n.Attr(ctx, &resp.Attr)
 }
 
 func (n *Node) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs.Node) error {

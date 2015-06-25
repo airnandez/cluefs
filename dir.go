@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	"time"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
@@ -94,8 +93,8 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 	}
 	resp.Attr = statToFuseAttr(st)
 	resp.Node = fuse.NodeID(resp.Attr.Inode)
-	resp.AttrValid = time.Duration(1) * time.Second
-	resp.EntryValid = time.Duration(500) * time.Millisecond
+	// TODO: should we overwrite resp.EntryValid?
+	// resp.EntryValid = time.Duration(500) * time.Millisecond
 	if isDir = resp.Attr.Mode.IsDir(); isDir {
 		return NewDir(d.path, req.Name, d.fs), nil
 	}

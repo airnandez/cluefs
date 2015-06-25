@@ -24,7 +24,7 @@ func FuseDebug(msg interface{}) {
 
 func NewClueFS(shadowDir string, tracer Tracer) (*ClueFS, error) {
 	if !filepath.IsAbs(shadowDir) {
-		return nil, fmt.Errorf("'%s' is not an absolute path")
+		return nil, fmt.Errorf("'%s' is not an absolute path", shadowDir)
 	}
 	dir, err := os.Open(shadowDir)
 	if err != nil {
@@ -82,10 +82,6 @@ func (fs *ClueFS) Root() (fusefs.Node, error) {
 	return fs.root, nil
 }
 
-func (fs *ClueFS) Init(ctx context.Context, req *fuse.InitRequest, resp *fuse.InitResponse) error {
-	return nil
-}
-
 func (fs *ClueFS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.StatfsResponse) error {
 	defer trace(NewStatFsOp(req, fs.mountDir))
 	return statfsToFuse(fs.shadowDir, resp)
@@ -94,6 +90,6 @@ func (fs *ClueFS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fus
 func (fs *ClueFS) Destroy() {
 	if fs.root != nil {
 		fs.root.doClose()
+		fs.root = nil
 	}
-	fs.root = nil
 }
