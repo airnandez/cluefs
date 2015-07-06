@@ -141,7 +141,7 @@ var opNames = map[FSOperType]string{
 	FsRead:        "read",
 	FsWrite:       "write",
 	FsFlush:       "flush",
-	FsRelease:     "close",
+	FsRelease:     "release",
 	FsMkdir:       "mkdir",
 	FsRemove:      "unlink",
 	FsCreate:      "creat",
