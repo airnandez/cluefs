@@ -31,7 +31,7 @@ will make `cluefs` emit the events below (one event per line):
 2015-03-23T10:26:35.840322045Z,2015-03-23T10:26:35.840364156Z,42111,fabio,9986,lsst,1021,/usr/bin/cat,23161,/home/fabio/data/hello.txt,openfile,O_RDONLY,0000
 2015-03-23T10:26:35.840556082Z,2015-03-23T10:26:35.840572507Z,16425,fabio,9986,lsst,1021,/usr/bin/cat,23161,/home/fabio/data/hello.txt,read,15,0,4096,15
 2015-03-23T10:26:35.841009818Z,2015-03-23T10:26:35.901634332Z,60624514,fabio,9986,lsst,1021,/usr/bin/cat,23161,/home/fabio/data/hello.txt,flush
-2015-03-23T10:26:35.90204842Z,2015-03-23T10:26:35.902054482Z,6062,root,0,root,0,,0,/home/fabio/data/hello.txt,close
+2015-03-23T10:26:35.90204842Z,2015-03-23T10:26:35.902054482Z,6062,root,0,root,0,,0,/home/fabio/data/hello.txt,release
 ...
 ```
 

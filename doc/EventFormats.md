@@ -53,7 +53,6 @@ In this document, records in JSON are shown in pretty print format for readabili
 Click on the links below to get more details on the event format for the corresponding system call:
 
 - [`access(2)`](#access)
-- [`close(2)`](#close)
 - [`creat(2)`](#creat)
 - [flush](#flush)
 - [`getxattr(2)`](#getxattr)
@@ -63,6 +62,7 @@ Click on the links below to get more details on the event format for the corresp
 - [`read(2)`](#read)
 - [`readdir(3)`](#readdir)
 - [`readlink(2)`](#readlink)
+- [release](#release)
 - [`removexattr(2)`](#removexattr)
 - [`rename(2)`](#rename)
 - [setattr](#setattr)  [***ToDo***]
@@ -105,35 +105,6 @@ An event of this type is emitted when an application calls the `access(2)` syste
 * access mode: possible values are ```F_OK```, ```X_OK```, ```W_OK```, ```R_OK```
 
 _______________________________________________________________________
-## close
-An event of this type is emitted when an application calls the `close(2)` system call on an open file or directory. An event of this type usually follows a `flush` event.
-
-##### Example CSV record:
-```
-2015-03-23T10:05:50.754493103Z,2015-03-23T10:05:50.754503307Z,10204,root,0,root,0,,0,/home/fabio/data/hello.txt,file,close
-```
-
-##### Example JSON record:
-```json
-{
-	"hdr":{
-		// ... common header ...
-	},
-	"op":{
-		"type":"close",
-		"path":"/home/fabio/data/hello.txt",
-		"isdir": false
-	}
-}
-```
-
-##### Description of values specific to this operation::
-
-* operation type: `close`
-* path of file or directory this operation acts upon
-* is this path a directory?
-
-_______________________________________________________________________
 ## creat
 An event of this type is emitted when an application calls the `creat(2)` system call.
 
@@ -168,7 +139,7 @@ An event of this type is emitted when an application calls the `creat(2)` system
 
 _______________________________________________________________________
 ## flush
-An event of this type is emitted when an application calls the `close(2)` system call on an open file. An event of type `close` usually follows.
+An event of this type is emitted when an application calls the `fflush(3)` standard C library call or the `close(2)` system call on a previously open file. This event may appear several times for the same file. An event of type `release` usually follows.
 
 ##### Example CSV record:
 ```
@@ -418,6 +389,36 @@ An event of this type is emitted when an application calls the `readlink(2)` sys
 * path of directory this operation acts upon
 * is the path a directory?
 
+_______________________________________________________________________
+## release
+An event of this type is emitted when all the applications which had previously opened a particular file or directory notify the file system they no longer need that file or directory by calling the `close(2)` system call.
+
+Please note that on some operating systems such as Linux, the user id, the group id and the process id fields may be zero.
+
+##### Example CSV record:
+```
+2015-03-23T10:05:50.754493103Z,2015-03-23T10:05:50.754503307Z,10204,root,0,root,0,,0,/home/fabio/data/hello.txt,file,release
+```
+
+##### Example JSON record:
+```json
+{
+	"hdr":{
+		// ... common header ...
+	},
+	"op":{
+		"type":"release",
+		"path":"/home/fabio/data/hello.txt",
+		"isdir": false
+	}
+}
+```
+
+##### Description of values specific to this operation::
+
+* operation type: `release`
+* path of file or directory this operation acts upon
+* is this path a directory?
 _______________________________________________________________________
 ## removexattr
 An event of this type is emitted when an application calls the `removexattr(2)` system call.
