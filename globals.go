@@ -7,13 +7,14 @@ import (
 	"path/filepath"
 )
 
-const (
-	version = "0.2"
-)
-
 var (
 	programName string
 	errlog      *log.Logger
+
+	// The two variables below are set at build time for official releases
+	// (see Makefile)
+	version   = "unknown"
+	buildTime = "unknown"
 )
 
 func init() {
