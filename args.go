@@ -374,6 +374,9 @@ func printVersionInfo(f *os.File) {
 	const versionTempl = `
 {{.AppName}} version {{.AppVersion}} ({{.Os}},{{.Arch}})
 
+Built on:
+{{.Sp3}}{{.BuildTime}}
+
 Author:
 {{.Sp3}}Fabio Hernandez
 {{.Sp3}}IN2P3/CNRS computing center, Lyon (France)
@@ -384,6 +387,7 @@ Source code and documentation:
 	fields := map[string]string{
 		"AppName":    programName,
 		"AppVersion": version,
+		"BuildTime":  buildTime,
 		"Os":         runtime.GOOS,
 		"Arch":       runtime.GOARCH,
 		"Sp3":        "   ",
