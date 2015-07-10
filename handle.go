@@ -38,6 +38,10 @@ type Handle struct {
 	blksize  uint32
 }
 
+func NewHandle() *Handle {
+	return &Handle{}
+}
+
 func (h Handle) String() string {
 	return fmt.Sprintf("%d", h.handleID)
 }
@@ -56,16 +60,34 @@ func (h *Handle) doOpen(path string, flags fuse.OpenFlags) error {
 	if err != nil {
 		return osErrorToFuseError(err)
 	}
-	var stat syscall.Stat_t
-	if err := syscall.Fstat(int(file.Fd()), &stat); err != nil {
+	if h.size, h.blksize, err = getSizeAndBlkSize(file); err != nil {
+		return err
+	}
+	h.file, h.flags, h.handleID = file, flags, newHandleID()
+	return nil
+}
+
+func (h *Handle) doCreate(path string, flags fuse.OpenFlags, mode os.FileMode) error {
+	if h.isOpen() {
+		return nil
+	}
+	file, err := os.OpenFile(path, int(flags), mode)
+	if err != nil {
 		return osErrorToFuseError(err)
 	}
-	h.file = file
-	h.handleID = newHandleID()
-	h.flags = flags
-	h.size = uint64(stat.Size)
-	h.blksize = uint32(stat.Blksize)
+	if _, h.blksize, err = getSizeAndBlkSize(file); err != nil {
+		return err
+	}
+	h.file, h.flags, h.handleID = file, flags, newHandleID()
 	return nil
+}
+
+func getSizeAndBlkSize(f *os.File) (uint64, uint32, error) {
+	var stat syscall.Stat_t
+	if err := syscall.Fstat(int(f.Fd()), &stat); err != nil {
+		return 0, 0, osErrorToFuseError(err)
+	}
+	return uint64(stat.Size), uint32(stat.Blksize), nil
 }
 
 func (h *Handle) doClose() error {
