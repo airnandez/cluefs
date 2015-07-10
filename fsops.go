@@ -225,8 +225,10 @@ func flagsString(flags fuse.OpenFlags) string {
 
 type OpenOp struct {
 	Header
-	Flags fuse.OpenFlags
-	Perm  os.FileMode
+	Flags     fuse.OpenFlags
+	Perm      os.FileMode
+	FileSize  uint64
+	BlockSize uint32
 }
 
 func NewOpenOp(req *fuse.OpenRequest, path string) *OpenOp {
@@ -238,7 +240,7 @@ func NewOpenOp(req *fuse.OpenRequest, path string) *OpenOp {
 }
 
 func (op *OpenOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %s %s", &op.Header, op.Path, isDirMap[op.IsDir], flagsString(op.Flags), permString(op.Perm))
+	return fmt.Sprintf("%s '%s' %s %s %s %d %d", &op.Header, op.Path, isDirMap[op.IsDir], flagsString(op.Flags), permString(op.Perm), op.FileSize, op.BlockSize)
 }
 
 var isDirMap = map[bool]string{
@@ -250,11 +252,13 @@ func (op *OpenOp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
 		"hdr": &op.Header,
 		"op": map[string]interface{}{
-			"type":  op.OperType.String(),
-			"path":  op.Path,
-			"isdir": op.IsDir,
-			"flags": flagsString(op.Flags),
-			"perm":  permString(op.Perm),
+			"type":    op.OperType.String(),
+			"path":    op.Path,
+			"isdir":   op.IsDir,
+			"flags":   flagsString(op.Flags),
+			"perm":    permString(op.Perm),
+			"size":    op.FileSize,
+			"blksize": op.BlockSize,
 		},
 	})
 }
@@ -264,6 +268,8 @@ func (op *OpenOp) MarshalCSV() []string {
 		op.Header.MarshalCSV(),
 		flagsString(op.Flags),
 		permString(op.Perm),
+		fmt.Sprintf("%d", op.FileSize),
+		fmt.Sprintf("%d", op.BlockSize),
 	)
 }
 
@@ -368,6 +374,7 @@ func (op *WriteOp) MarshalCSV() []string {
 
 type FlushOp struct {
 	Header
+	FileSize uint64
 }
 
 func NewFlushOp(req *fuse.FlushRequest, path string) *FlushOp {
@@ -377,7 +384,7 @@ func NewFlushOp(req *fuse.FlushRequest, path string) *FlushOp {
 }
 
 func (op *FlushOp) String() string {
-	return fmt.Sprintf("%s '%s' %s", &op.Header, op.Path, isDirMap[op.IsDir])
+	return fmt.Sprintf("%s '%s' %s %d", &op.Header, op.Path, isDirMap[op.IsDir], op.FileSize)
 }
 
 func (op *FlushOp) MarshalJSON() ([]byte, error) {
@@ -387,12 +394,16 @@ func (op *FlushOp) MarshalJSON() ([]byte, error) {
 			"type":  op.OperType.String(),
 			"path":  op.Path,
 			"isdir": op.IsDir,
+			"size":  op.FileSize,
 		},
 	})
 }
 
 func (op *FlushOp) MarshalCSV() []string {
-	return op.Header.MarshalCSV()
+	return append(
+		op.Header.MarshalCSV(),
+		fmt.Sprintf("%d", op.FileSize),
+	)
 }
 
 // ------------------------------------------------------------------

@@ -29,7 +29,8 @@ func NewOpenFile(parent string, name string, fs *ClueFS, file *os.File) *File {
 }
 
 func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fusefs.Handle, error) {
-	defer trace(NewOpenOp(req, f.path))
+	op := NewOpenOp(req, f.path)
+	defer trace(op)
 	newfile := NewFile(f.parent, f.name, f.fs)
 	perm := os.FileMode(req.Flags).Perm()
 	flags := int(req.Flags & fuse.OpenAccessModeMask)
@@ -37,6 +38,8 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 		return nil, err
 	}
 	resp.Handle = newfile.handleID
+	op.FileSize = newfile.size
+	op.BlockSize = newfile.blksize
 	return newfile, nil
 }
 
@@ -55,8 +58,13 @@ func (f *File) Flush(ctx context.Context, req *fuse.FlushRequest) error {
 	if !f.isOpen() {
 		return fuse.ENOTSUP
 	}
-	defer trace(NewFlushOp(req, f.path))
-	return f.doSync()
+	op := NewFlushOp(req, f.path)
+	defer trace(op)
+	if err := f.doSync(); err != nil {
+		return err
+	}
+	op.FileSize = f.size
+	return nil
 }
 
 func (f *File) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {

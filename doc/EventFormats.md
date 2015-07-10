@@ -73,7 +73,9 @@ Click on the links below to get more details on the event format for the corresp
 - [`unlink(2)`](#unlink)
 - [`write(2)`](#write)
 
-_______________________________________________________________________
+___________________________________________
+___________________________________________
+
 ## access
 An event of this type is emitted when an application calls the `access(2)` system call.
 
@@ -104,7 +106,6 @@ An event of this type is emitted when an application calls the `access(2)` syste
 * is the path a directory?
 * access mode: possible values are ```F_OK```, ```X_OK```, ```W_OK```, ```R_OK```
 
-_______________________________________________________________________
 ## creat
 An event of this type is emitted when an application calls the `creat(2)` system call.
 
@@ -137,13 +138,13 @@ An event of this type is emitted when an application calls the `creat(2)` system
 * flags: possible values are combinations of `O_RDONLY`, `O_WRONLY`, `O_RDWR`, `O_CREAT`, `O_EXCL`, `O_TRUNC`, `O_APPEND`, `O_SYNC`
 * permissions (in octal)
 
-_______________________________________________________________________
+
 ## flush
 An event of this type is emitted when an application calls the `fflush(3)` standard C library call or the `close(2)` system call on a previously open file. This event may appear several times for the same file. An event of type `release` usually follows.
 
 ##### Example CSV record:
 ```
-2015-03-26T11:23:30.623721516Z,2015-03-26T11:23:30.693056569Z,69335053,fabio,9986,lsst,1021,/usr/bin/cp,14884,/home/fabio/data/hello.txt,file,flush
+2015-03-26T11:23:30.623721516Z,2015-03-26T11:23:30.693056569Z,69335053,fabio,9986,lsst,1021,/usr/bin/cp,14884,/home/fabio/data/hello.txt,file,flush,36
 ```
 
 ##### Example JSON record:
@@ -155,7 +156,8 @@ An event of this type is emitted when an application calls the `fflush(3)` stand
 	"op":{
 		"type":"flush",
 		"path":"/home/fabio/data/hello.txt",
-		"isdir": false
+		"isdir": false,
+		"size": 36
 	}
 }
 ```
@@ -165,8 +167,9 @@ An event of this type is emitted when an application calls the `fflush(3)` stand
 * operation type: `flush`
 * path of file this operation acts upon
 * is the path a directory?
+* file size (in bytes)
 
-_______________________________________________________________________
+
 ## getxattr
 An event of this type is emitted when an application calls the `getxattr(2)` system call.
 
@@ -197,7 +200,7 @@ An event of this type is emitted when an application calls the `getxattr(2)` sys
 * is the path a directory?
 * name of the extended attribute which value is requested
 
-_______________________________________________________________________
+
 ## listxattr
 An event of this type is emitted when an application calls the `listxattr(2)` system call.
 
@@ -229,7 +232,7 @@ An event of this type is emitted when an application calls the `listxattr(2)` sy
 * size of the buffer provided by the caller application
 
 
-_______________________________________________________________________
+
 ## mkdir
 An event of this type is emitted when an application calls the `mkdir(2)` system call.
 
@@ -260,13 +263,13 @@ An event of this type is emitted when an application calls the `mkdir(2)` system
 * is the path a directory?
 * permissions (in octal)
 
-_______________________________________________________________________
+
 ## open
 An event of this type is emitted when an application calls the `open(2)` system call.
 
 ##### Example CSV record:
 ```
-2015-03-26T13:41:15.025077899Z,2015-03-26T13:41:15.02510926Z,31361,fabio,9986,lsst,1021,/usr/bin/bash,15457,/home/fabio/data/hello.txt,file,open,O_WRONLY|O_APPEND,0001
+2015-03-26T13:41:15.025077899Z,2015-03-26T13:41:15.02510926Z,31361,fabio,9986,lsst,1021,/usr/bin/bash,15457,/home/fabio/data/hello.txt,file,open,O_WRONLY|O_APPEND,0001,36,4096
 ```
 
 ##### Example JSON record:
@@ -280,7 +283,9 @@ An event of this type is emitted when an application calls the `open(2)` system 
 		"path":"/home/fabio/data/hello.txt",
 		"isdir": false,
 		"flags":"O_WRONLY|O_APPEND",
-		"perm":"0001"
+		"perm":"0001",
+		"size": 36,
+		"blksize": 4096
 	}
 }
 ```
@@ -292,8 +297,10 @@ An event of this type is emitted when an application calls the `open(2)` system 
 * is the path a directory?
 * open flags: possible values are combinations of `O_RDONLY`, `O_WRONLY`, `O_RDWR`, `O_CREAT`, `O_EXCL`, `O_TRUNC`, `O_APPEND`, `O_SYNC`
 * permissions (in octal)
+* file size (in bytes)
+* block size of the file system this file or directory resides on (in bytes)
 
-_______________________________________________________________________
+
 ## read
 An event of this type is emitted when an application calls the `read(2)` system call.
 
@@ -330,7 +337,7 @@ An event of this type is emitted when an application calls the `read(2)` system 
 * number of bytes requested
 * number of bytes actually read
 
-_______________________________________________________________________
+
 ## readdir
 An event of this type is emitted when an application calls the `readdir(2)` system call.
 
@@ -360,7 +367,7 @@ An event of this type is emitted when an application calls the `readdir(2)` syst
 * is the path a directory?
 
 
-_______________________________________________________________________
+
 ## readlink
 An event of this type is emitted when an application calls the `readlink(2)` system call.
 
@@ -389,7 +396,6 @@ An event of this type is emitted when an application calls the `readlink(2)` sys
 * path of directory this operation acts upon
 * is the path a directory?
 
-_______________________________________________________________________
 ## release
 An event of this type is emitted when all the applications which had previously opened a particular file or directory notify the file system they no longer need that file or directory by calling the `close(2)` system call.
 
@@ -419,7 +425,8 @@ Please note that on some operating systems such as Linux, the user id, the group
 * operation type: `release`
 * path of file or directory this operation acts upon
 * is this path a directory?
-_______________________________________________________________________
+
+
 ## removexattr
 An event of this type is emitted when an application calls the `removexattr(2)` system call.
 
@@ -450,7 +457,7 @@ An event of this type is emitted when an application calls the `removexattr(2)` 
 * is the path a directory?
 * name of the extended attribute to be removed
 
-_______________________________________________________________________
+
 ## rename
 An event of this type is emitted when an application calls the `rename(2)` system call.
 
@@ -481,7 +488,7 @@ An event of this type is emitted when an application calls the `rename(2)` syste
 * is this path a directory?
 * new name of to set to this file or directory
 
-_______________________________________________________________________
+
 ## setxattr
 An event of this type is emitted when an application calls the `setxattr(2)` system call.
 
@@ -512,7 +519,7 @@ An event of this type is emitted when an application calls the `setxattr(2)` sys
 * is the path a directory?
 * name of the extended attribute to be set
 
-_______________________________________________________________________
+
 ## stat
 An event of this type is emitted when an application calls the `stat(2)` system call.
 
@@ -541,7 +548,7 @@ An event of this type is emitted when an application calls the `stat(2)` system 
 * path of file or directory this operation acts upon
 * is the path a directory?
 
-_______________________________________________________________________
+
 ## statfs
 An event of this type is emitted when an application calls the `statfs(2)` system call.
 
@@ -570,7 +577,7 @@ An event of this type is emitted when an application calls the `statfs(2)` syste
 * path of file or directory this operation acts upon
 * is the path a directory?
 
-_______________________________________________________________________
+
 ## symlink
 An event of this type is emitted when an application calls the `symlink(2)` system call.
 
@@ -601,7 +608,7 @@ An event of this type is emitted when an application calls the `symlink(2)` syst
 * is the path a directory?
 * path of the target file or directory the new symbolic link points to
 
-_______________________________________________________________________
+
 ## unlink
 An event of this type is emitted when an application calls the `unlink(2)` system call.
 
@@ -631,7 +638,6 @@ An event of this type is emitted when an application calls the `unlink(2)` syste
 * is this path a directory?
 
 
-_______________________________________________________________________
 
 ## write
 An event of this type is emitted when an application calls the `write(2)` system call.
