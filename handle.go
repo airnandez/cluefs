@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"syscall"
 
 	"bazil.org/fuse"
 )
@@ -33,6 +34,7 @@ type Handle struct {
 	file     *os.File
 	handleID fuse.HandleID
 	size     uint64
+	blksize  uint32
 }
 
 func (h Handle) String() string {
@@ -51,13 +53,14 @@ func (h *Handle) doOpen(path string, flags int, perm os.FileMode) error {
 	if err != nil {
 		return osErrorToFuseError(err)
 	}
-	info, err := file.Stat()
-	if err != nil {
+	var stat syscall.Stat_t
+	if err := syscall.Fstat(int(file.Fd()), &stat); err != nil {
 		return osErrorToFuseError(err)
 	}
+	h.size = uint64(stat.Size)
+	h.blksize = uint32(stat.Blksize)
 	h.file = file
 	h.handleID = newHandleID()
-	h.size = uint64(info.Size())
 	return nil
 }
 
@@ -72,8 +75,16 @@ func (h *Handle) doClose() error {
 }
 
 func (h *Handle) doSync() error {
-	if h.isOpen() {
-		return osErrorToFuseError(h.file.Sync())
+	if !h.isOpen() {
+		return nil
 	}
+	if err := h.file.Sync(); err != nil {
+		return osErrorToFuseError(err)
+	}
+	var stat syscall.Stat_t
+	if err := syscall.Fstat(int(h.file.Fd()), &stat); err != nil {
+		return osErrorToFuseError(err)
+	}
+	h.size = uint64(stat.Size)
 	return nil
 }
