@@ -144,7 +144,7 @@ An event of this type is emitted when an application calls the `fflush(3)` stand
 
 ##### Example CSV record:
 ```
-2015-03-26T11:23:30.623721516Z,2015-03-26T11:23:30.693056569Z,69335053,fabio,9986,lsst,1021,/usr/bin/cp,14884,/home/fabio/data/hello.txt,file,flush,36
+2015-03-26T11:23:30.623721516Z,2015-03-26T11:23:30.693056569Z,69335053,fabio,9986,lsst,1021,/usr/bin/cp,14884,/home/fabio/data/hello.txt,file,flush,O_WRONLY,36
 ```
 
 ##### Example JSON record:
@@ -157,6 +157,7 @@ An event of this type is emitted when an application calls the `fflush(3)` stand
 		"type":"flush",
 		"path":"/home/fabio/data/hello.txt",
 		"isdir": false,
+		"flags": "O_WRONLY",
 		"size": 36
 	}
 }
@@ -167,6 +168,7 @@ An event of this type is emitted when an application calls the `fflush(3)` stand
 * operation type: `flush`
 * path of file this operation acts upon
 * is the path a directory?
+* flags this file was open with: possible values are combinations of `O_RDONLY`, `O_WRONLY`, `O_RDWR`, `O_CREAT`, `O_EXCL`, `O_TRUNC`, `O_APPEND`, `O_SYNC`
 * file size (in bytes)
 
 

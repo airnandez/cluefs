@@ -59,10 +59,8 @@ func NewDir(parent string, name string, fs *ClueFS) *Dir {
 func (d *Dir) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fusefs.Handle, error) {
 	op := NewOpenOp(req, d.path)
 	defer trace(op)
-	perm := os.FileMode(req.Flags).Perm()
-	flags := int(req.Flags)
 	newdir := NewDir(d.parent, d.name, d.fs)
-	if err := newdir.doOpen(d.path, flags, perm); err != nil {
+	if err := newdir.doOpen(d.path, req.Flags); err != nil {
 		return nil, err
 	}
 	newdir.SetProcessInfo(req.Header)

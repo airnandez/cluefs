@@ -33,6 +33,7 @@ func init() {
 type Handle struct {
 	file     *os.File
 	handleID fuse.HandleID
+	flags    fuse.OpenFlags
 	size     uint64
 	blksize  uint32
 }
@@ -45,11 +46,13 @@ func (h *Handle) isOpen() bool {
 	return h.file != nil
 }
 
-func (h *Handle) doOpen(path string, flags int, perm os.FileMode) error {
+func (h *Handle) doOpen(path string, flags fuse.OpenFlags) error {
 	if h.isOpen() {
 		return nil
 	}
-	file, err := os.OpenFile(path, flags, perm)
+	mode := int(flags & fuse.OpenAccessModeMask)
+	perm := os.FileMode(flags).Perm()
+	file, err := os.OpenFile(path, mode, perm)
 	if err != nil {
 		return osErrorToFuseError(err)
 	}
@@ -57,10 +60,11 @@ func (h *Handle) doOpen(path string, flags int, perm os.FileMode) error {
 	if err := syscall.Fstat(int(file.Fd()), &stat); err != nil {
 		return osErrorToFuseError(err)
 	}
-	h.size = uint64(stat.Size)
-	h.blksize = uint32(stat.Blksize)
 	h.file = file
 	h.handleID = newHandleID()
+	h.flags = flags
+	h.size = uint64(stat.Size)
+	h.blksize = uint32(stat.Blksize)
 	return nil
 }
 
