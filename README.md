@@ -13,25 +13,26 @@ However, `cluefs` does not depend on LSST software system and can be used in sev
 Although there are several tools for tracing system activity such as [strace](http://en.wikipedia.org/wiki/Strace), [DTrace](http://en.wikipedia.org/wiki/DTrace), [SystemTap](https://sourceware.org/systemtap/wiki) or [sysdig](http://www.sysdig.org/), for different reasons none of them was considered suitable for our particular use case.
 
 ## How to use
-Let's suppose you want to observe what file operations the command `cat $HOME/data/hello.txt` induces on the file system where the argument file is located. You can use `cluefs` to expose the contents under the directory `$HOME/data` (the *shadow* directory) through a synthetized file system mounted on say `/tmp/trace`. To mount the file system use the command:
+Let's suppose you want to observe what file operations the command `cat $HOME/data/hello.txt` induces on the file system where the file `hello.txt` is actually located. You can use `cluefs` to expose the contents under the directory `$HOME/data` (the *shadow* directory) through a synthesized file system mounted on `/tmp/trace`. To mount the file system use the command:
 
 ```bash
 $ cluefs --shadow=$HOME/data  --mount=/tmp/trace &
 ```
+
 Once the file system is successfully mounted, when an application accesses a file or directory under `/tmp/trace`, `cluefs` emits an event for every call to the file system (e.g. `access`, `open`, `read`, `close`, etc.). For instance, the command:
 
 ```bash
 $ cat /tmp/trace/hello.txt
 ```
+
 will make `cluefs` emit the events below (one event per line):
 
 ```
 ...
-2015-03-23T10:26:35.839367864Z,2015-03-23T10:26:35.839794442Z,426578,fabio,9986,lsst,1021,/usr/bin/cat,23161,/home/fabio/data/hello.txt,stat
-2015-03-23T10:26:35.840322045Z,2015-03-23T10:26:35.840364156Z,42111,fabio,9986,lsst,1021,/usr/bin/cat,23161,/home/fabio/data/hello.txt,openfile,O_RDONLY,0000
-2015-03-23T10:26:35.840556082Z,2015-03-23T10:26:35.840572507Z,16425,fabio,9986,lsst,1021,/usr/bin/cat,23161,/home/fabio/data/hello.txt,read,15,0,4096,15
-2015-03-23T10:26:35.841009818Z,2015-03-23T10:26:35.901634332Z,60624514,fabio,9986,lsst,1021,/usr/bin/cat,23161,/home/fabio/data/hello.txt,flush
-2015-03-23T10:26:35.90204842Z,2015-03-23T10:26:35.902054482Z,6062,root,0,root,0,,0,/home/fabio/data/hello.txt,release
+2015-07-10T13:14:13.066799456Z,2015-07-10T13:14:13.066854171Z,54715,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,open,O_RDONLY,0000,14,4096
+2015-07-10T13:14:13.067274118Z,2015-07-10T13:14:13.067287085Z,12967,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,read,14,0,4096,14
+2015-07-10T13:14:13.067602625Z,2015-07-10T13:14:13.069215159Z,1612534,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,flush,O_RDONLY,14
+2015-07-10T13:14:13.069899802Z,2015-07-10T13:14:13.0699212Z,21398,root,0,root,0,,0,/home/fabio/data/hello.txt,file,release
 ...
 ```
 
