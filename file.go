@@ -32,9 +32,7 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	op := NewOpenOp(req, f.path)
 	defer trace(op)
 	newfile := NewFile(f.parent, f.name, f.fs)
-	perm := os.FileMode(req.Flags).Perm()
-	flags := int(req.Flags & fuse.OpenAccessModeMask)
-	if err := newfile.doOpen(f.path, flags, perm); err != nil {
+	if err := newfile.doOpen(f.path, req.Flags); err != nil {
 		return nil, err
 	}
 	resp.Handle = newfile.handleID
@@ -64,6 +62,7 @@ func (f *File) Flush(ctx context.Context, req *fuse.FlushRequest) error {
 		return err
 	}
 	op.FileSize = f.size
+	op.Flags = fuse.OpenFlags(f.flags)
 	return nil
 }
 
