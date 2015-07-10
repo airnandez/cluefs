@@ -153,11 +153,11 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (fusefs.Node, fusefs.Handle, error) {
 	path := filepath.Join(d.path, req.Name)
 	defer trace(NewCreateOp(req, path))
-	f, err := os.OpenFile(path, int(req.Flags), req.Mode)
-	if err != nil {
-		return nil, nil, osErrorToFuseError(err)
+	h := NewHandle()
+	if err := h.doCreate(path, req.Flags, req.Mode); err != nil {
+		return nil, nil, err
 	}
-	newfile := NewOpenFile(d.path, req.Name, d.fs, f)
+	newfile := NewFileWithHandle(d.path, req.Name, d.fs, h)
 	return newfile, newfile, nil
 }
 

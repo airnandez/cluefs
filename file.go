@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"os"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
@@ -21,10 +20,10 @@ func NewFile(parent string, name string, fs *ClueFS) *File {
 	}
 }
 
-func NewOpenFile(parent string, name string, fs *ClueFS, file *os.File) *File {
+func NewFileWithHandle(parent string, name string, fs *ClueFS, handle *Handle) *File {
 	return &File{
 		Node:   NewNode(parent, name, fs),
-		Handle: &Handle{file: file, handleID: newHandleID()},
+		Handle: handle,
 	}
 }
 
