@@ -60,12 +60,13 @@ func (d *Dir) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenRe
 	op := NewOpenOp(req, d.path)
 	defer trace(op)
 	newdir := NewDir(d.parent, d.name, d.fs)
-	if err := newdir.doOpen(d.path, req.Flags); err != nil {
+	size, err := newdir.doOpen(d.path, req.Flags)
+	if err != nil {
 		return nil, err
 	}
 	newdir.SetProcessInfo(req.Header)
 	resp.Handle = newdir.handleID
-	op.FileSize = newdir.size
+	op.FileSize = size
 	op.BlockSize = newdir.blksize
 	return newdir, nil
 }

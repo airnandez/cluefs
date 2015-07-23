@@ -34,7 +34,6 @@ type Handle struct {
 	file     *os.File
 	handleID fuse.HandleID
 	flags    fuse.OpenFlags
-	size     uint64
 	blksize  uint32
 }
 
@@ -50,21 +49,22 @@ func (h *Handle) isOpen() bool {
 	return h.file != nil
 }
 
-func (h *Handle) doOpen(path string, flags fuse.OpenFlags) error {
+func (h *Handle) doOpen(path string, flags fuse.OpenFlags) (uint64, error) {
 	if h.isOpen() {
-		return nil
+		return 0, nil
 	}
 	mode := int(flags & fuse.OpenAccessModeMask)
 	perm := os.FileMode(flags).Perm()
 	file, err := os.OpenFile(path, mode, perm)
 	if err != nil {
-		return osErrorToFuseError(err)
+		return 0, osErrorToFuseError(err)
 	}
-	if h.size, h.blksize, err = getSizeAndBlkSize(file); err != nil {
-		return err
+	blksize, err := getBlkSize(file)
+	if err != nil {
+		return 0, err
 	}
-	h.file, h.flags, h.handleID = file, flags, newHandleID()
-	return nil
+	h.file, h.flags, h.handleID, h.blksize = file, flags, newHandleID(), blksize
+	return h.getFileSize()
 }
 
 func (h *Handle) doCreate(path string, flags fuse.OpenFlags, mode os.FileMode) error {
@@ -75,19 +75,20 @@ func (h *Handle) doCreate(path string, flags fuse.OpenFlags, mode os.FileMode) e
 	if err != nil {
 		return osErrorToFuseError(err)
 	}
-	if _, h.blksize, err = getSizeAndBlkSize(file); err != nil {
+	blksize, err := getBlkSize(file)
+	if err != nil {
 		return err
 	}
-	h.file, h.flags, h.handleID = file, flags, newHandleID()
+	h.file, h.flags, h.handleID, h.blksize = file, flags, newHandleID(), blksize
 	return nil
 }
 
-func getSizeAndBlkSize(f *os.File) (uint64, uint32, error) {
+func (h *Handle) getFileSize() (uint64, error) {
 	var stat syscall.Stat_t
-	if err := syscall.Fstat(int(f.Fd()), &stat); err != nil {
-		return 0, 0, osErrorToFuseError(err)
+	if err := syscall.Fstat(int(h.file.Fd()), &stat); err != nil {
+		return 0, osErrorToFuseError(err)
 	}
-	return uint64(stat.Size), uint32(stat.Blksize), nil
+	return uint64(stat.Size), nil
 }
 
 func (h *Handle) doClose() error {
@@ -100,17 +101,20 @@ func (h *Handle) doClose() error {
 	return nil
 }
 
-func (h *Handle) doSync() error {
+func (h *Handle) doSync() (uint64, error) {
 	if !h.isOpen() {
-		return nil
+		return 0, nil
 	}
 	if err := h.file.Sync(); err != nil {
-		return osErrorToFuseError(err)
+		return 0, osErrorToFuseError(err)
 	}
+	return h.getFileSize()
+}
+
+func getBlkSize(f *os.File) (uint32, error) {
 	var stat syscall.Stat_t
-	if err := syscall.Fstat(int(h.file.Fd()), &stat); err != nil {
-		return osErrorToFuseError(err)
+	if err := syscall.Fstat(int(f.Fd()), &stat); err != nil {
+		return 0, osErrorToFuseError(err)
 	}
-	h.size = uint64(stat.Size)
-	return nil
+	return uint32(stat.Blksize), nil
 }
