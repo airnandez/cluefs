@@ -77,7 +77,7 @@ func (h *Header) MarshalJSON() ([]byte, error) {
 func (h *Header) MarshalCSV() []string {
 	// Pre-allocate so that operation-specific marshallers don't need
 	// to re-allocate to extend the serialized version of each operation
-	res := make([]string, 0, 16)
+	res := make([]string, 0, 32)
 	return append(
 		res,
 		h.Start.UTC().Format(time.RFC3339Nano),
@@ -284,10 +284,9 @@ type ReadOp struct {
 	BytesRead int
 }
 
-func NewReadOp(req *fuse.ReadRequest, path string, fileSize uint64) *ReadOp {
+func NewReadOp(req *fuse.ReadRequest, path string) *ReadOp {
 	return &ReadOp{
 		Header:    NewHeaderFile(req.Header, path, FsRead),
-		FileSize:  fileSize,
 		Offset:    req.Offset,
 		Size:      req.Size,
 		BytesRead: -1,

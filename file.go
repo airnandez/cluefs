@@ -31,11 +31,12 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	op := NewOpenOp(req, f.path)
 	defer trace(op)
 	newfile := NewFile(f.parent, f.name, f.fs)
-	if err := newfile.doOpen(f.path, req.Flags); err != nil {
+	size, err := newfile.doOpen(f.path, req.Flags)
+	if err != nil {
 		return nil, err
 	}
 	resp.Handle = newfile.handleID
-	op.FileSize = newfile.size
+	op.FileSize = size
 	op.BlockSize = newfile.blksize
 	return newfile, nil
 }
@@ -57,10 +58,11 @@ func (f *File) Flush(ctx context.Context, req *fuse.FlushRequest) error {
 	}
 	op := NewFlushOp(req, f.path)
 	defer trace(op)
-	if err := f.doSync(); err != nil {
+	size, err := f.doSync()
+	if err != nil {
 		return err
 	}
-	op.FileSize = f.size
+	op.FileSize = size
 	op.Flags = fuse.OpenFlags(f.flags)
 	return nil
 }
@@ -69,8 +71,13 @@ func (f *File) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadR
 	if !f.isOpen() {
 		return fuse.ENOTSUP
 	}
-	op := NewReadOp(req, f.path, f.size)
+	op := NewReadOp(req, f.path)
 	defer trace(op)
+	size, err := f.getFileSize()
+	if err != nil {
+		return err
+	}
+	op.FileSize = size
 	n, err := f.file.ReadAt(resp.Data[0:req.Size], req.Offset)
 	resp.Data = resp.Data[0:n]
 	op.BytesRead = n
