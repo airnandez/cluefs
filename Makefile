@@ -13,6 +13,6 @@ release: build
 	@tar -czf cluefs-${TAG}-${OS}-${ARCH}.tar.gz cluefs
 
 clean:
-	@rm cluefs cluefs-*.tar.gz
+	@rm -f cluefs cluefs-*.tar.gz
 
 buildall: clean build
