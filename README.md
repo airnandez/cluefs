@@ -3,12 +3,12 @@
 ## Overview
 `cluefs` is a lightweight utility to collect data on the I/O events induced by an application when interacting with a file system. It emits detailed, machine-parseable data on every file system-level operation.
 
-The trace information emitted by this utility is meant to be analysed using tools not included in this package.
+The trace information emitted by this utility is meant to be analysed using tools not included in this package. You can find a collection of such tools in a [separate project](https://github.com/airnandez/cluefs-tools).
 
 ## Motivation
 The main goal of developing this utility is to observe and quantify the file I/O load induced by the software system being developed by the [LSST data management](http://dm.lsst.org/) team to process the data to be collected by the [Large Synoptic Survey Telescope](http://www.lsst.org/) (LSST).
 
-However, `cluefs` does not depend on LSST software system and can be used in several unrelated contexts. It may also be useful for other use cases, such as to get an overall understanding of how file systems work or to observe the (usually hidden and unexpected) operations performed when you mount a file system on your computer. 
+However, `cluefs` does not depend on LSST software system and can be used in several unrelated contexts. It may also be useful for other use cases, such as to get an overall understanding of how file systems work or to observe the (usually hidden and unexpected) operations performed when you mount a file system on your computer.
 
 Although there are several tools for tracing system activity such as [strace](http://en.wikipedia.org/wiki/Strace), [DTrace](http://en.wikipedia.org/wiki/DTrace), [SystemTap](https://sourceware.org/systemtap/wiki) or [sysdig](http://www.sysdig.org/), for different reasons none of them was considered suitable for our particular use case.
 
@@ -129,7 +129,7 @@ In particular, please note that `cluefs` does **not** protect you against any de
 ## Credits
 
 ### Author
-This software was developed and is maintained by Fabio Hernandez at [IN2P3 / CNRS computing center](http://cc.in2p3.fr) (Lyon, France). 
+This software was developed and is maintained by Fabio Hernandez at [IN2P3 / CNRS computing center](http://cc.in2p3.fr) (Lyon, France).
 
 ### Acknowledgements
 
