@@ -1,4 +1,4 @@
-package main
+package cluefs
 
 import (
 	"flag"
