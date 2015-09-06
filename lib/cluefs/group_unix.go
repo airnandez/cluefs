@@ -1,6 +1,6 @@
 // +build linux darwin
 
-package main
+package cluefs
 
 /*
 #include <unistd.h>

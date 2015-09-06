@@ -1,4 +1,4 @@
-package main
+package cluefs
 
 type Config struct {
 	entries map[string]string
