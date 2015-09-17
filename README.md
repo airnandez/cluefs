@@ -29,10 +29,10 @@ will make `cluefs` emit the events below (one event per line):
 
 ```
 ...
-2015-07-10T13:14:13.066799456Z,2015-07-10T13:14:13.066854171Z,54715,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,open,O_RDONLY,0000,14,4096
-2015-07-10T13:14:13.067274118Z,2015-07-10T13:14:13.067287085Z,12967,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,read,14,0,4096,14
-2015-07-10T13:14:13.067602625Z,2015-07-10T13:14:13.069215159Z,1612534,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,flush,O_RDONLY,14
-2015-07-10T13:14:13.069899802Z,2015-07-10T13:14:13.0699212Z,21398,root,0,root,0,,0,/home/fabio/data/hello.txt,file,release
+2015-07-10T13:14:13.066799456Z,2015-07-10T13:14:13.066854171Z,54715,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,open,O_RDONLY,0000,14,4096,58
+2015-07-10T13:14:13.067274118Z,2015-07-10T13:14:13.067287085Z,12967,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,read,14,0,4096,14,58
+2015-07-10T13:14:13.067602625Z,2015-07-10T13:14:13.069215159Z,1612534,fabio,1000,fabio,1000,/bin/cat,28997,/home/fabio/data/hello.txt,file,flush,O_RDONLY,14,58
+2015-07-10T13:14:13.069899802Z,2015-07-10T13:14:13.0699212Z,21398,root,0,root,0,,0,/home/fabio/data/hello.txt,file,release,58
 ...
 ```
 
