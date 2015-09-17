@@ -18,7 +18,13 @@ type ProcessInfo struct {
 }
 
 func (proc ProcessInfo) String() string {
-	return fmt.Sprintf("%s(%d) %s(%d) '%s'(%d)", userName(proc.Uid), proc.Uid, groupName(proc.Gid), proc.Gid, processPath(proc.Pid), proc.Pid)
+	return fmt.Sprintf("%s(%d) %s(%d) '%s'(%d)",
+		userName(proc.Uid),
+		proc.Uid,
+		groupName(proc.Gid),
+		proc.Gid,
+		processPath(proc.Pid),
+		proc.Pid)
 }
 
 // Information shared by all traceable file system operations
@@ -56,7 +62,10 @@ func NewHeaderProcessInfo(proc ProcessInfo, path string, isDir bool, op FSOperTy
 }
 
 func (h *Header) String() string {
-	return fmt.Sprintf("[%s %d] %s", h.ProcessInfo, h.Duration().Nanoseconds(), h.OperType)
+	return fmt.Sprintf("[%s %d] %s",
+		h.ProcessInfo,
+		h.Duration().Nanoseconds(),
+		h.OperType)
 }
 
 func (h *Header) MarshalJSON() ([]byte, error) {
@@ -229,6 +238,7 @@ type OpenOp struct {
 	Perm      os.FileMode
 	FileSize  uint64
 	BlockSize uint32
+	OpenID    uint64
 }
 
 func NewOpenOp(req *fuse.OpenRequest, path string) *OpenOp {
@@ -240,7 +250,15 @@ func NewOpenOp(req *fuse.OpenRequest, path string) *OpenOp {
 }
 
 func (op *OpenOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %s %s %d %d", &op.Header, op.Path, isDirMap[op.IsDir], flagsString(op.Flags), permString(op.Perm), op.FileSize, op.BlockSize)
+	return fmt.Sprintf("%s '%s' %s %s %s %d %d %d",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		flagsString(op.Flags),
+		permString(op.Perm),
+		op.FileSize,
+		op.BlockSize,
+		op.OpenID)
 }
 
 var isDirMap = map[bool]string{
@@ -259,6 +277,7 @@ func (op *OpenOp) MarshalJSON() ([]byte, error) {
 			"perm":    permString(op.Perm),
 			"size":    op.FileSize,
 			"blksize": op.BlockSize,
+			"openid":  op.OpenID,
 		},
 	})
 }
@@ -270,6 +289,7 @@ func (op *OpenOp) MarshalCSV() []string {
 		permString(op.Perm),
 		fmt.Sprintf("%d", op.FileSize),
 		fmt.Sprintf("%d", op.BlockSize),
+		fmt.Sprintf("%d", op.OpenID),
 	)
 }
 
@@ -282,19 +302,29 @@ type ReadOp struct {
 	Offset    int64
 	Size      int
 	BytesRead int
+	OpenID    uint64
 }
 
-func NewReadOp(req *fuse.ReadRequest, path string) *ReadOp {
+func NewReadOp(req *fuse.ReadRequest, path string, openID uint64) *ReadOp {
 	return &ReadOp{
 		Header:    NewHeaderFile(req.Header, path, FsRead),
 		Offset:    req.Offset,
 		Size:      req.Size,
 		BytesRead: -1,
+		OpenID:    openID,
 	}
 }
 
 func (op *ReadOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %d %d %d %d", &op.Header, op.FileSize, op.Path, isDirMap[op.IsDir], op.Offset, op.Size, op.BytesRead)
+	return fmt.Sprintf("%s '%s' %s %d %d %d %d %d",
+		&op.Header,
+		op.FileSize,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.Offset,
+		op.Size,
+		op.BytesRead,
+		op.OpenID)
 }
 
 func (op *ReadOp) MarshalJSON() ([]byte, error) {
@@ -308,6 +338,7 @@ func (op *ReadOp) MarshalJSON() ([]byte, error) {
 			"position":  op.Offset,
 			"bytesreq":  op.Size,
 			"bytesread": op.BytesRead,
+			"openid":    op.OpenID,
 		},
 	})
 }
@@ -319,6 +350,7 @@ func (op *ReadOp) MarshalCSV() []string {
 		fmt.Sprintf("%d", op.Offset),
 		fmt.Sprintf("%d", op.Size),
 		fmt.Sprintf("%d", op.BytesRead),
+		fmt.Sprintf("%d", op.OpenID),
 	)
 }
 
@@ -330,19 +362,28 @@ type WriteOp struct {
 	Offset       int64
 	Size         int
 	BytesWritten int
+	OpenID       uint64
 }
 
-func NewWriteOp(req *fuse.WriteRequest, path string) *WriteOp {
+func NewWriteOp(req *fuse.WriteRequest, path string, openID uint64) *WriteOp {
 	return &WriteOp{
 		Header:       NewHeaderFile(req.Header, path, FsWrite),
 		Offset:       req.Offset,
 		Size:         len(req.Data),
 		BytesWritten: -1,
+		OpenID:       openID,
 	}
 }
 
 func (op *WriteOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %d %d %d", &op.Header, op.Path, isDirMap[op.IsDir], op.Offset, op.Size, op.BytesWritten)
+	return fmt.Sprintf("%s '%s' %s %d %d %d %d",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.Offset,
+		op.Size,
+		op.BytesWritten,
+		op.OpenID)
 }
 
 func (op *WriteOp) MarshalJSON() ([]byte, error) {
@@ -355,6 +396,7 @@ func (op *WriteOp) MarshalJSON() ([]byte, error) {
 			"position":     op.Offset,
 			"bytesreq":     op.Size,
 			"byteswritten": op.BytesWritten,
+			"openid":       op.OpenID,
 		},
 	})
 }
@@ -365,6 +407,7 @@ func (op *WriteOp) MarshalCSV() []string {
 		fmt.Sprintf("%d", op.Offset),
 		fmt.Sprintf("%d", op.Size),
 		fmt.Sprintf("%d", op.BytesWritten),
+		fmt.Sprintf("%d", op.OpenID),
 	)
 }
 
@@ -375,27 +418,36 @@ type FlushOp struct {
 	Header
 	Flags    fuse.OpenFlags
 	FileSize uint64
+	OpenID   uint64
 }
 
-func NewFlushOp(req *fuse.FlushRequest, path string) *FlushOp {
+func NewFlushOp(req *fuse.FlushRequest, path string, openID uint64) *FlushOp {
 	return &FlushOp{
 		Header: NewHeaderFile(req.Header, path, FsFlush),
+		OpenID: openID,
 	}
 }
 
 func (op *FlushOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %s %d", &op.Header, op.Path, isDirMap[op.IsDir], flagsString(op.Flags), op.FileSize)
+	return fmt.Sprintf("%s '%s' %s %s %d %d",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		flagsString(op.Flags),
+		op.FileSize,
+		op.OpenID)
 }
 
 func (op *FlushOp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
 		"hdr": &op.Header,
 		"op": map[string]interface{}{
-			"type":  op.OperType.String(),
-			"path":  op.Path,
-			"isdir": op.IsDir,
-			"flags": flagsString(op.Flags),
-			"size":  op.FileSize,
+			"type":   op.OperType.String(),
+			"path":   op.Path,
+			"isdir":  op.IsDir,
+			"flags":  flagsString(op.Flags),
+			"size":   op.FileSize,
+			"openid": op.OpenID,
 		},
 	})
 }
@@ -405,6 +457,7 @@ func (op *FlushOp) MarshalCSV() []string {
 		op.Header.MarshalCSV(),
 		flagsString(op.Flags),
 		fmt.Sprintf("%d", op.FileSize),
+		fmt.Sprintf("%d", op.OpenID),
 	)
 }
 
@@ -413,31 +466,41 @@ func (op *FlushOp) MarshalCSV() []string {
 
 type ReleaseOp struct {
 	Header
+	OpenID uint64
 }
 
-func NewReleaseOp(req *fuse.ReleaseRequest, path string) *ReleaseOp {
+func NewReleaseOp(req *fuse.ReleaseRequest, path string, openID uint64) *ReleaseOp {
 	return &ReleaseOp{
 		Header: NewHeader(req.Header, path, req.Dir, FsRelease),
+		OpenID: openID,
 	}
 }
 
 func (op *ReleaseOp) String() string {
-	return fmt.Sprintf("%s '%s' %s", &op.Header, op.Path, isDirMap[op.IsDir])
+	return fmt.Sprintf("%s '%s' %s %d",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.OpenID)
 }
 
 func (op *ReleaseOp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
 		"hdr": &op.Header,
 		"op": map[string]interface{}{
-			"type":  op.OperType.String(),
-			"path":  op.Path,
-			"isdir": op.IsDir,
+			"type":   op.OperType.String(),
+			"path":   op.Path,
+			"isdir":  op.IsDir,
+			"openid": op.OpenID,
 		},
 	})
 }
 
 func (op *ReleaseOp) MarshalCSV() []string {
-	return op.Header.MarshalCSV()
+	return append(
+		op.Header.MarshalCSV(),
+		fmt.Sprintf("%d", op.OpenID),
+	)
 }
 
 // ------------------------------------------------------------------
@@ -456,7 +519,11 @@ func NewMkdirOp(req *fuse.MkdirRequest, path string, mode os.FileMode) *MkdirOp 
 }
 
 func (op *MkdirOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %s", &op.Header, op.Path, isDirMap[op.IsDir], permString(op.Mode))
+	return fmt.Sprintf("%s '%s' %s %s",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		permString(op.Mode))
 }
 
 func (op *MkdirOp) MarshalJSON() ([]byte, error) {
@@ -515,8 +582,9 @@ func (op *RemoveOp) MarshalCSV() []string {
 
 type CreateOp struct {
 	Header
-	Flags fuse.OpenFlags
-	Mode  os.FileMode
+	Flags  fuse.OpenFlags
+	Mode   os.FileMode
+	OpenID uint64
 }
 
 func NewCreateOp(req *fuse.CreateRequest, path string) *CreateOp {
@@ -528,18 +596,25 @@ func NewCreateOp(req *fuse.CreateRequest, path string) *CreateOp {
 }
 
 func (op *CreateOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %s %s", &op.Header, op.Path, isDirMap[op.IsDir], flagsString(op.Flags), permString(op.Mode))
+	return fmt.Sprintf("%s '%s' %s %s %s %d",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		flagsString(op.Flags),
+		permString(op.Mode),
+		op.OpenID)
 }
 
 func (op *CreateOp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
 		"hdr": &op.Header,
 		"op": map[string]interface{}{
-			"type":  op.OperType.String(),
-			"path":  op.Path,
-			"isdir": op.IsDir,
-			"flags": flagsString(op.Flags),
-			"perm":  permString(op.Mode),
+			"type":   op.OperType.String(),
+			"path":   op.Path,
+			"isdir":  op.IsDir,
+			"flags":  flagsString(op.Flags),
+			"perm":   permString(op.Mode),
+			"openid": op.OpenID,
 		},
 	})
 }
@@ -549,6 +624,7 @@ func (op *CreateOp) MarshalCSV() []string {
 		op.Header.MarshalCSV(),
 		flagsString(op.Flags),
 		permString(op.Mode),
+		fmt.Sprintf("%d", op.OpenID),
 	)
 }
 
@@ -568,7 +644,11 @@ func NewSymlinkOp(req *fuse.SymlinkRequest, path, target string, isDir bool) *Sy
 }
 
 func (op *SymlinkOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %s", &op.Header, op.Path, isDirMap[op.IsDir], op.Target)
+	return fmt.Sprintf("%s '%s' %s %s",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.Target)
 }
 
 func (op *SymlinkOp) MarshalJSON() ([]byte, error) {
@@ -627,31 +707,41 @@ func (op *LookupOp) MarshalCSV() []string {
 
 type ReadDirOp struct {
 	Header
+	OpenID uint64
 }
 
-func NewReadDirOp(path string, id ProcessInfo) *ReadDirOp {
+func NewReadDirOp(path string, id ProcessInfo, openID uint64) *ReadDirOp {
 	return &ReadDirOp{
 		Header: NewHeaderProcessInfo(id, path, true, FsReadDir),
+		OpenID: openID,
 	}
 }
 
 func (op *ReadDirOp) String() string {
-	return fmt.Sprintf("%s '%s' %s", &op.Header, op.Path, isDirMap[op.IsDir])
+	return fmt.Sprintf("%s '%s' %s %d",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.OpenID)
 }
 
 func (op *ReadDirOp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
 		"hdr": &op.Header,
 		"op": map[string]interface{}{
-			"type":  op.OperType.String(),
-			"path":  op.Path,
-			"isdir": op.IsDir,
+			"type":   op.OperType.String(),
+			"path":   op.Path,
+			"isdir":  op.IsDir,
+			"openid": op.OpenID,
 		},
 	})
 }
 
 func (op *ReadDirOp) MarshalCSV() []string {
-	return op.Header.MarshalCSV()
+	return append(
+		op.Header.MarshalCSV(),
+		fmt.Sprintf("%d", op.OpenID),
+	)
 }
 
 // ------------------------------------------------------------------
@@ -702,7 +792,11 @@ func NewRenameOp(req *fuse.RenameRequest, oldpath, newpath string) *RenameOp {
 }
 
 func (op *RenameOp) String() string {
-	return fmt.Sprintf("%s '%s' %s '%s'", &op.Header, op.Path, op.NewPath, isDirMap[op.IsDir])
+	return fmt.Sprintf("%s '%s' %s '%s'",
+		&op.Header,
+		op.Path,
+		op.NewPath,
+		isDirMap[op.IsDir])
 }
 
 func (op *RenameOp) MarshalJSON() ([]byte, error) {
@@ -772,7 +866,11 @@ func NewAccessOp(req *fuse.AccessRequest, path string, isDir bool) *AccessOp {
 }
 
 func (op *AccessOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %x", &op.Header, op.Path, isDirMap[op.IsDir], op.Mask)
+	return fmt.Sprintf("%s '%s' %s %x",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.Mask)
 }
 
 func (op *AccessOp) MarshalJSON() ([]byte, error) {
@@ -811,7 +909,11 @@ func NewSetattrOp(req *fuse.SetattrRequest, path string) *SetattrOp {
 
 func (op *SetattrOp) String() string {
 	// TODO: improve printing of attribute to decouple from fuse
-	return fmt.Sprintf("%s '%s' %s %s", &op.Header, op.Path, isDirMap[op.IsDir], op.AttrValid)
+	return fmt.Sprintf("%s '%s' %s %s",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.AttrValid)
 }
 
 func (op *SetattrOp) MarshalJSON() ([]byte, error) {
@@ -850,7 +952,11 @@ func NewGetxattrOp(req *fuse.GetxattrRequest, path string) *GetxattrOp {
 }
 
 func (op *GetxattrOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %s", &op.Header, op.Path, isDirMap[op.IsDir], op.AttrName)
+	return fmt.Sprintf("%s '%s' %s %s",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.AttrName)
 }
 
 func (op *GetxattrOp) MarshalJSON() ([]byte, error) {
@@ -888,7 +994,11 @@ func NewListxattrOp(req *fuse.ListxattrRequest, path string) *ListxattrOp {
 }
 
 func (op *ListxattrOp) String() string {
-	return fmt.Sprintf("%s '%s' %s %d", &op.Header, op.Path, isDirMap[op.IsDir], op.Size)
+	return fmt.Sprintf("%s '%s' %s %d",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.Size)
 }
 
 func (op *ListxattrOp) MarshalJSON() ([]byte, error) {
@@ -927,7 +1037,11 @@ func NewSetxattrOp(req *fuse.SetxattrRequest, path string) *SetxattrOp {
 
 func (op *SetxattrOp) String() string {
 	// TODO: improve printing of attribute to decouple from fuse
-	return fmt.Sprintf("%s '%s' %s '%s'", &op.Header, op.Path, isDirMap[op.IsDir], op.AttrName)
+	return fmt.Sprintf("%s '%s' %s '%s'",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.AttrName)
 }
 
 func (op *SetxattrOp) MarshalJSON() ([]byte, error) {
@@ -965,7 +1079,11 @@ func NewRemovexattrOp(req *fuse.RemovexattrRequest, path string) *RemovexattrOp 
 }
 
 func (op *RemovexattrOp) String() string {
-	return fmt.Sprintf("%s '%s' %s '%s'", &op.Header, op.Path, isDirMap[op.IsDir], op.AttrName)
+	return fmt.Sprintf("%s '%s' %s '%s'",
+		&op.Header,
+		op.Path,
+		isDirMap[op.IsDir],
+		op.AttrName)
 }
 
 func (op *RemovexattrOp) MarshalJSON() ([]byte, error) {

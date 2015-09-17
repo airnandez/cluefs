@@ -102,9 +102,10 @@ func (d *Dir) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenRe
 		return nil, err
 	}
 	newdir.SetProcessInfo(req.Header)
-	resp.Handle = newdir.handleID
+	resp.Handle = fuse.HandleID(newdir.handleID)
 	op.FileSize = size
 	op.BlockSize = newdir.blksize
+	op.OpenID = newdir.handleID
 	return newdir, nil
 }
 
@@ -112,7 +113,7 @@ func (d *Dir) Release(ctx context.Context, req *fuse.ReleaseRequest) error {
 	if !d.isOpen() {
 		return nil
 	}
-	defer trace(NewReleaseOp(req, d.path))
+	defer trace(NewReleaseOp(req, d.path, d.handleID))
 	if req.ReleaseFlags&fuse.ReleaseFlush != 0 {
 		d.doSync()
 	}
@@ -161,7 +162,7 @@ func (d *Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	if !d.isOpen() {
 		return nil, fuse.ENOTSUP
 	}
-	defer trace(NewReadDirOp(d.path, d.ProcessInfo))
+	defer trace(NewReadDirOp(d.path, d.ProcessInfo, d.handleID))
 	names, err := d.file.Readdirnames(0)
 	if err != nil {
 		return nil, fuse.EIO
@@ -210,13 +211,15 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 
 func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (fusefs.Node, fusefs.Handle, error) {
 	path := filepath.Join(d.path, req.Name)
-	defer trace(NewCreateOp(req, path))
+	op := NewCreateOp(req, path)
+	defer trace(op)
 	h := NewHandle()
 	if err := h.doCreate(path, req.Flags, req.Mode); err != nil {
 		return nil, nil, err
 	}
 	newfile := NewFileWithHandle(d.path, req.Name, d.fs, h)
 	d.saveEntry(req.Name, newfile)
+	op.OpenID = newfile.handleID
 	return newfile, newfile, nil
 }
 
