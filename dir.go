@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 
 	"bazil.org/fuse"
@@ -39,6 +40,20 @@ type Dir struct {
 	*Node
 	*Handle
 	ProcessInfo
+
+	// mutex protects the entries map
+	mutex sync.RWMutex
+
+	// entries maps the name of a node with its node object
+	entries map[string]interface{}
+}
+
+func NewDir(parent string, name string, fs *ClueFS) *Dir {
+	return &Dir{
+		Node:    NewNode(parent, name, fs),
+		Handle:  &Handle{},
+		entries: make(map[string]interface{}, 32),
+	}
 }
 
 func (d Dir) String() string {
@@ -49,11 +64,33 @@ func (d *Dir) SetProcessInfo(h fuse.Header) {
 	d.ProcessInfo = ProcessInfo{Uid: h.Uid, Gid: h.Gid, Pid: h.Pid}
 }
 
-func NewDir(parent string, name string, fs *ClueFS) *Dir {
-	return &Dir{
-		Node:   NewNode(parent, name, fs),
-		Handle: &Handle{},
+// saveEntry saves a *File or *Dir object associated to a
+// name in this directory
+func (d *Dir) saveEntry(name string, entry interface{}) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	d.entries[name] = entry
+}
+
+// dropEntry deletes the *File or *Dir object associated to a
+// name in this directory
+func (d *Dir) dropEntry(name string) interface{} {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	if e := d.entries[name]; e != nil {
+		delete(d.entries, name)
+		return e
 	}
+	return nil
+}
+
+// getEntry returns the *File or *Dir object currently associated
+// to a name in this directory. It may return nil if there is
+// no such object associate to name
+func (d *Dir) getEntry(name string) interface{} {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	return d.entries[name]
 }
 
 func (d *Dir) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fusefs.Handle, error) {
@@ -97,10 +134,27 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 	resp.Node = fuse.NodeID(resp.Attr.Inode)
 	// TODO: should we overwrite resp.EntryValid?
 	// resp.EntryValid = time.Duration(500) * time.Millisecond
-	if isDir = resp.Attr.Mode.IsDir(); isDir {
-		return NewDir(d.path, req.Name, d.fs), nil
+
+	// Is there any saved entry for the name being looked up?
+	isDir = resp.Attr.Mode.IsDir()
+	if entry := d.getEntry(req.Name); entry != nil {
+		// There is already a saved entry for this node. Return it.
+		if isDir {
+			return entry.(*Dir), nil
+		}
+		return entry.(*File), nil
 	}
-	return NewFile(d.path, req.Name, d.fs), nil
+
+	// No saved entry found. Save it and return the appropriate
+	// file or directory
+	if isDir {
+		dd := NewDir(d.path, req.Name, d.fs)
+		d.saveEntry(req.Name, dd)
+		return dd, nil
+	}
+	ff := NewFile(d.path, req.Name, d.fs)
+	d.saveEntry(req.Name, ff)
+	return ff, nil
 }
 
 func (d *Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
@@ -139,7 +193,9 @@ func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (fusefs.Node, e
 	if err := os.Mkdir(path, req.Mode); err != nil {
 		return nil, osErrorToFuseError(err)
 	}
-	return NewDir(d.path, req.Name, d.fs), nil
+	newdir := NewDir(d.path, req.Name, d.fs)
+	d.saveEntry(req.Name, newdir)
+	return newdir, nil
 }
 
 func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
@@ -148,6 +204,7 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 	if err := os.Remove(path); err != nil {
 		return osErrorToFuseError(err)
 	}
+	d.dropEntry(req.Name)
 	return nil
 }
 
@@ -159,6 +216,7 @@ func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.Cr
 		return nil, nil, err
 	}
 	newfile := NewFileWithHandle(d.path, req.Name, d.fs, h)
+	d.saveEntry(req.Name, newfile)
 	return newfile, newfile, nil
 }
 
@@ -205,9 +263,48 @@ func (d *Dir) Symlink(ctx context.Context, req *fuse.SymlinkRequest) (fusefs.Nod
 		return nil, osErrorToFuseError(err)
 	}
 	if targetIsDir {
-		return NewDir(d.path, req.NewName, d.fs), nil
+		entry := NewDir(d.path, req.NewName, d.fs)
+		d.saveEntry(req.NewName, entry)
+		return entry, nil
 	}
-	return NewFile(d.path, req.NewName, d.fs), nil
+	entry := NewFile(d.path, req.NewName, d.fs)
+	d.saveEntry(req.NewName, entry)
+	return entry, nil
+}
+
+func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs.Node) error {
+	destDir, ok := newDir.(*Dir)
+	if !ok {
+		return fuse.EIO
+	}
+	oldpath := filepath.Join(d.path, req.OldName)
+	newpath := filepath.Join(destDir.path, req.NewName)
+	defer trace(NewRenameOp(req, oldpath, newpath))
+	if err := os.Rename(oldpath, newpath); err != nil {
+		return osErrorToFuseError(err)
+	}
+
+	// Delete the name of the node just renamed from the set of entries
+	// of the source directory and add the new name to the entries of the
+	// destination directory.
+	// In addition, set the new parent and new name of the renamed node
+	if e := d.dropEntry(req.OldName); e != nil {
+		switch e.(type) {
+		case *Dir:
+			// The renamed node is a directory
+			dd := e.(*Dir)
+			dd.setParentAndName(destDir.path, req.NewName)
+			destDir.saveEntry(req.NewName, dd)
+		case *File:
+			// The renamed node is a file
+			ff := e.(*File)
+			ff.setParentAndName(destDir.path, req.NewName)
+			destDir.saveEntry(req.NewName, ff)
+		default:
+			// should not happen. Do nothing
+		}
+	}
+	return nil
 }
 
 // osErrorToFuseError converts an os.PathError, os.LinkError or
