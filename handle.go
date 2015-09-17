@@ -9,20 +9,20 @@ import (
 )
 
 var (
-	handleIDGeneratorChan <-chan fuse.HandleID
+	handleIDGeneratorChan <-chan uint64
 )
 
-func handleIDGenerator() <-chan fuse.HandleID {
-	outChan := make(chan fuse.HandleID)
+func handleIDGenerator() <-chan uint64 {
+	outChan := make(chan uint64)
 	go func() {
-		for nextId := fuse.HandleID(1); ; nextId++ {
+		for nextId := uint64(1); ; nextId++ {
 			outChan <- nextId
 		}
 	}()
 	return outChan
 }
 
-func newHandleID() fuse.HandleID {
+func newHandleID() uint64 {
 	return <-handleIDGeneratorChan
 }
 
@@ -32,7 +32,7 @@ func init() {
 
 type Handle struct {
 	file     *os.File
-	handleID fuse.HandleID
+	handleID uint64
 	flags    fuse.OpenFlags
 	blksize  uint32
 }

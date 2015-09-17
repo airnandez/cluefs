@@ -35,9 +35,10 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	if err != nil {
 		return nil, err
 	}
-	resp.Handle = newfile.handleID
+	resp.Handle = fuse.HandleID(newfile.handleID)
 	op.FileSize = size
 	op.BlockSize = newfile.blksize
+	op.OpenID = newfile.handleID
 	return newfile, nil
 }
 
@@ -45,7 +46,7 @@ func (f *File) Release(ctx context.Context, req *fuse.ReleaseRequest) error {
 	if !f.isOpen() {
 		return fuse.ENOTSUP
 	}
-	defer trace(NewReleaseOp(req, f.path))
+	defer trace(NewReleaseOp(req, f.path, f.handleID))
 	if req.ReleaseFlags&fuse.ReleaseFlush != 0 {
 		f.doSync()
 	}
@@ -56,7 +57,7 @@ func (f *File) Flush(ctx context.Context, req *fuse.FlushRequest) error {
 	if !f.isOpen() {
 		return fuse.ENOTSUP
 	}
-	op := NewFlushOp(req, f.path)
+	op := NewFlushOp(req, f.path, f.handleID)
 	defer trace(op)
 	size, err := f.doSync()
 	if err != nil {
@@ -71,7 +72,7 @@ func (f *File) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadR
 	if !f.isOpen() {
 		return fuse.ENOTSUP
 	}
-	op := NewReadOp(req, f.path)
+	op := NewReadOp(req, f.path, f.handleID)
 	defer trace(op)
 	size, err := f.getFileSize()
 	if err != nil {
@@ -91,7 +92,7 @@ func (f *File) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.Wri
 	if !f.isOpen() {
 		return fuse.ENOTSUP
 	}
-	op := NewWriteOp(req, f.path)
+	op := NewWriteOp(req, f.path, f.handleID)
 	defer trace(op)
 	var err error
 	resp.Size, err = f.file.WriteAt(req.Data, req.Offset)
