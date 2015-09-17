@@ -125,7 +125,8 @@ An event of this type is emitted when an application calls the `creat(2)` system
 		"path": "/home/fabio/data/hello.txt",
 		"isdir": false,
 		"flags": "O_WRONLY|O_CREAT|O_EXCL",
-		"perm": "0644"
+		"perm": "0644",
+		"openid": 58
 	}
 }
 ```
@@ -137,6 +138,7 @@ An event of this type is emitted when an application calls the `creat(2)` system
 * is this path a directory?
 * flags: possible values are combinations of `O_RDONLY`, `O_WRONLY`, `O_RDWR`, `O_CREAT`, `O_EXCL`, `O_TRUNC`, `O_APPEND`, `O_SYNC`
 * permissions (in octal)
+* identifier of the `open` event associated to this `creat` operation (see format for [`open`](#open) event)
 
 
 ## flush
@@ -144,7 +146,7 @@ An event of this type is emitted when an application calls the `fflush(3)` stand
 
 ##### Example CSV record:
 ```
-2015-03-26T11:23:30.623721516Z,2015-03-26T11:23:30.693056569Z,69335053,fabio,9986,lsst,1021,/usr/bin/cp,14884,/home/fabio/data/hello.txt,file,flush,O_WRONLY,36
+2015-03-26T11:23:30.623721516Z,2015-03-26T11:23:30.693056569Z,69335053,fabio,9986,lsst,1021,/usr/bin/cp,14884,/home/fabio/data/hello.txt,file,flush,O_WRONLY,36,58
 ```
 
 ##### Example JSON record:
@@ -158,7 +160,8 @@ An event of this type is emitted when an application calls the `fflush(3)` stand
 		"path":"/home/fabio/data/hello.txt",
 		"isdir": false,
 		"flags": "O_WRONLY",
-		"size": 36
+		"size": 36,
+		"openid": 58
 	}
 }
 ```
@@ -170,7 +173,7 @@ An event of this type is emitted when an application calls the `fflush(3)` stand
 * is the path a directory?
 * flags this file was open with: possible values are combinations of `O_RDONLY`, `O_WRONLY`, `O_RDWR`, `O_CREAT`, `O_EXCL`, `O_TRUNC`, `O_APPEND`, `O_SYNC`
 * file size (in bytes)
-
+* identifier of the `open` event associated to this `flush` operation (see format for [`open`](#open) event)
 
 ## getxattr
 An event of this type is emitted when an application calls the `getxattr(2)` system call.
@@ -271,7 +274,7 @@ An event of this type is emitted when an application calls the `open(2)` system 
 
 ##### Example CSV record:
 ```
-2015-03-26T13:41:15.025077899Z,2015-03-26T13:41:15.02510926Z,31361,fabio,9986,lsst,1021,/usr/bin/bash,15457,/home/fabio/data/hello.txt,file,open,O_WRONLY|O_APPEND,0001,36,4096
+2015-03-26T13:41:15.025077899Z,2015-03-26T13:41:15.02510926Z,31361,fabio,9986,lsst,1021,/usr/bin/bash,15457,/home/fabio/data/hello.txt,file,open,O_WRONLY|O_APPEND,0001,36,4096,58
 ```
 
 ##### Example JSON record:
@@ -287,7 +290,8 @@ An event of this type is emitted when an application calls the `open(2)` system 
 		"flags":"O_WRONLY|O_APPEND",
 		"perm":"0001",
 		"size": 36,
-		"blksize": 4096
+		"blksize": 4096,
+		"openid": 58
 	}
 }
 ```
@@ -301,6 +305,7 @@ An event of this type is emitted when an application calls the `open(2)` system 
 * permissions (in octal)
 * file size (in bytes)
 * block size of the file system this file or directory resides on (in bytes)
+* identifier of this `open` event. Trace events of operations such as `read`, `write`, `flush`, etc. will contain this same id so that an association between, such an operation and an `open` operation can be made when parsing the trace events
 
 
 ## read
@@ -308,7 +313,7 @@ An event of this type is emitted when an application calls the `read(2)` system 
 
 ##### Example CSV record:
 ```
-2015-03-26T13:41:15.117910671Z,2015-03-26T13:41:15.117919662Z,8991,fabio,9986,lsst,1021,/usr/bin/cat,15472,/home/fabio/data/hello.txt,file,read,36,0,4096,36
+2015-03-26T13:41:15.117910671Z,2015-03-26T13:41:15.117919662Z,8991,fabio,9986,lsst,1021,/usr/bin/cat,15472,/home/fabio/data/hello.txt,file,read,36,0,4096,36,58
 ```
 
 ##### Example JSON record:
@@ -324,7 +329,8 @@ An event of this type is emitted when an application calls the `read(2)` system 
 		"filesize": 36,
 		"position": 0,
 		"bytesreq": 4096,
-		"bytesread": 36
+		"bytesread": 36,
+		"openid": 58
 	}
 }
 ```
@@ -338,6 +344,7 @@ An event of this type is emitted when an application calls the `read(2)` system 
 * position within the file where the read operation is requested to start
 * number of bytes requested
 * number of bytes actually read
+* identifier of the `open` event associated to this `read` operation (see format for [`open`](#open) event)
 
 
 ## readdir
@@ -357,7 +364,8 @@ An event of this type is emitted when an application calls the `readdir(2)` syst
 	"op":{
 		"type":"readdir",
 		"path":"/home/fabio/data",
-		"isdir": true
+		"isdir": true,
+		"openid": 58
 	}
 }
 ```
@@ -367,6 +375,7 @@ An event of this type is emitted when an application calls the `readdir(2)` syst
 * operation type: `readdir`
 * path of directory this operation acts upon
 * is the path a directory?
+* identifier of the `open` event associated to this `readdir` operation (see format for [`open`](#open) event)
 
 
 
@@ -398,6 +407,7 @@ An event of this type is emitted when an application calls the `readlink(2)` sys
 * path of directory this operation acts upon
 * is the path a directory?
 
+
 ## release
 An event of this type is emitted when all the applications which had previously opened a particular file or directory notify the file system they no longer need that file or directory by calling the `close(2)` system call.
 
@@ -417,7 +427,8 @@ Please note that on some operating systems such as Linux, the user id, the group
 	"op":{
 		"type":"release",
 		"path":"/home/fabio/data/hello.txt",
-		"isdir": false
+		"isdir": false,
+		"openid": 58
 	}
 }
 ```
@@ -427,7 +438,7 @@ Please note that on some operating systems such as Linux, the user id, the group
 * operation type: `release`
 * path of file or directory this operation acts upon
 * is this path a directory?
-
+* identifier of the `open` event associated to this `release` operation (see format for [`open`](#open) event)
 
 ## removexattr
 An event of this type is emitted when an application calls the `removexattr(2)` system call.
@@ -646,7 +657,7 @@ An event of this type is emitted when an application calls the `write(2)` system
 
 ##### Example CSV record:
 ```
-2015-03-26T13:41:14.877412036Z,2015-03-26T13:41:14.877434607Z,22571,fabio,9986,lsst,1021,/usr/bin/bash,15457,/home/fabio/data/hello.txt,file,write,0,15,15
+2015-03-26T13:41:14.877412036Z,2015-03-26T13:41:14.877434607Z,22571,fabio,9986,lsst,1021,/usr/bin/bash,15457,/home/fabio/data/hello.txt,file,write,0,15,15,58
 ```
 
 ##### Example JSON record:
@@ -661,7 +672,8 @@ An event of this type is emitted when an application calls the `write(2)` system
 		"isdir": false,
 		"position": 0,
 		"bytesreq": 15,
-		"byteswritten": 15
+		"byteswritten": 15,
+		"openid": 58
 	}
 }
 ```
@@ -674,3 +686,4 @@ An event of this type is emitted when an application calls the `write(2)` system
 * position within the file where this operation starts
 * number of bytes requested to be written
 * number of bytes actually written
+* identifier of the `open` event associated to this `write` operation (see format for [`open`](#open) event)
