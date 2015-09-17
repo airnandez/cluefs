@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"bazil.org/fuse"
-	fusefs "bazil.org/fuse/fs"
 	"bazil.org/fuse/syscallx"
 	"golang.org/x/net/context"
 )
@@ -28,6 +27,14 @@ func NewNode(parent string, name string, fs *ClueFS) *Node {
 	return &Node{parent: parent, name: name, path: path, fs: fs}
 }
 
+func (n *Node) setParentAndName(parent string, name string) {
+	path := filepath.Join(parent, name)
+	if len(parent) == 0 {
+		path = name
+	}
+	n.parent, n.name, n.path = parent, name, path
+}
+
 func (n Node) String() string {
 	return fmt.Sprintf("%s %s", n.parent, n.name)
 }
@@ -35,12 +42,19 @@ func (n Node) String() string {
 func (n *Node) Attr(ctx context.Context, attr *fuse.Attr) error {
 	var st syscall.Stat_t
 	syscall.Lstat(n.path, &st)
+	if err := syscall.Lstat(n.path, &st); err != nil {
+		return osErrorToFuseError(err)
+	}
 	*attr = statToFuseAttr(st)
 	return nil
 }
 
+func (n *Node) Getattr(ctx context.Context, req *fuse.GetattrRequest, resp *fuse.GetattrResponse) error {
+	return n.Attr(ctx, &resp.Attr)
+}
+
 func (n *Node) Access(ctx context.Context, req *fuse.AccessRequest) error {
-	isDir, err := isDir(n.path)
+	isDir, err := isDirectory(n.path)
 	defer trace(NewAccessOp(req, n.path, isDir))
 	if err != nil {
 		return err
@@ -95,17 +109,6 @@ func (n *Node) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse
 		return osErrorToFuseError(err)
 	}
 	return n.Attr(ctx, &resp.Attr)
-}
-
-func (n *Node) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs.Node) error {
-	destDir, ok := newDir.(*Dir)
-	if !ok {
-		return fuse.EIO
-	}
-	oldpath := filepath.Join(n.path, req.OldName)
-	newpath := filepath.Join(destDir.path, req.NewName)
-	defer trace(NewRenameOp(req, oldpath, newpath))
-	return osErrorToFuseError(os.Rename(oldpath, newpath))
 }
 
 func (n *Node) Readlink(ctx context.Context, req *fuse.ReadlinkRequest) (string, error) {
@@ -168,7 +171,7 @@ func (n *Node) Removexattr(ctx context.Context, req *fuse.RemovexattrRequest) er
 	return nil
 }
 
-func isDir(fullpath string) (bool, error) {
+func isDirectory(fullpath string) (bool, error) {
 	var st syscall.Stat_t
 	if err := syscall.Stat(fullpath, &st); err != nil {
 		return false, osErrorToFuseError(err)
