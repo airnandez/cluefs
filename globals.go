@@ -13,7 +13,7 @@ var (
 
 	// The two variables below are set at build time for official releases
 	// (see Makefile)
-	version   = "unknown"
+	version   = "dev"
 	buildTime = "unknown"
 )
 
