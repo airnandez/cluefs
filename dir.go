@@ -137,13 +137,15 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 	// resp.EntryValid = time.Duration(500) * time.Millisecond
 
 	// Is there any saved entry for the name being looked up?
+	// If so, return it
 	isDir = resp.Attr.Mode.IsDir()
-	if entry := d.getEntry(req.Name); entry != nil {
-		// There is already a saved entry for this node. Return it.
-		if isDir {
-			return entry.(*Dir), nil
+	if e := d.getEntry(req.Name); e != nil {
+		switch e.(type) {
+		case *Dir:
+			return e.(*Dir), nil
+		case *File:
+			return e.(*File), nil
 		}
-		return entry.(*File), nil
 	}
 
 	// No saved entry found. Save it and return the appropriate
