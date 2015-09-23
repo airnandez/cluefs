@@ -372,7 +372,10 @@ EXAMPLES:
 // printVersionInfo prints the version information about this application
 func printVersionInfo(f *os.File) {
 	const versionTempl = `
-{{.AppName}} version {{.AppVersion}} ({{.Os}},{{.Arch}})
+{{.AppName}} {{.AppVersion}}
+
+Compiler:
+{{.Sp3}}{{.GoVersion}} ({{.Os}}/{{.Arch}})
 
 Built on:
 {{.Sp3}}{{.BuildTime}}
@@ -390,6 +393,7 @@ Source code and documentation:
 		"BuildTime":  buildTime,
 		"Os":         runtime.GOOS,
 		"Arch":       runtime.GOARCH,
+		"GoVersion":  runtime.Version(),
 		"Sp3":        "   ",
 	}
 	minWidth, tabWidth, padding := 8, 4, 0

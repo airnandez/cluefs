@@ -6,7 +6,7 @@ TIMESTAMP := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 all: build
 
 build:
-	@go build -ldflags="-X main.buildTime '$(TIMESTAMP)' -X main.version '$(TAG)'"
+	@go build -ldflags="-X main.buildTime=$(TIMESTAMP) -X main.version=$(TAG)"
 
 release: build
 	@echo "Packaging cluefs ${TAG} for ${OS}"
