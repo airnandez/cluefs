@@ -18,10 +18,6 @@ type ClueFS struct {
 
 var trace func(op FsOperTracer)
 
-func FuseDebug(msg interface{}) {
-	Debug(4, "*** FUSE: %s", msg)
-}
-
 func NewClueFS(shadowDir string, tracer Tracer) (*ClueFS, error) {
 	if !filepath.IsAbs(shadowDir) {
 		return nil, fmt.Errorf("'%s' is not an absolute path", shadowDir)

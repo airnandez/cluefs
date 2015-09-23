@@ -21,19 +21,25 @@ const (
 )
 
 var (
-	debugLogger  = log.New(os.Stderr, "DEBUG ", logFlags)
-	debugLevel   = 0
-	prefixFormat = ""
-	formatMap    = map[bool]string{
+	debugLogger = log.New(os.Stderr, "", logFlags)
+	debugLevel  = 0
+	prefixFmt   = ""
+	formatMap   = map[bool]string{
 		true:  "\033[33mDEBUG L%d [%s:%d]\033[0m \t",
 		false: "DEBUG L%d [%s:%d] \t",
+	}
+	fuseFmt       = ""
+	fuseFormatMap = map[bool]string{
+		true:  "\033[36mFUSE\033[0m %s",
+		false: "FUSE %s",
 	}
 )
 
 func init() {
 	// Determine if output format to use according to the destination of the
 	// debug messages. If stderr is a terminal we can use colors
-	prefixFormat = formatMap[isTerminal(os.Stderr)]
+	prefixFmt = formatMap[isTerminal(os.Stderr)]
+	fuseFmt = fuseFormatMap[isTerminal(os.Stderr)]
 
 	// Set the debug level from the environmental variable
 	if env := os.Getenv("CLUEFS_DEBUG"); env != "" {
@@ -56,9 +62,14 @@ func IsDebugActive() bool {
 func Debug(level int, format string, v ...interface{}) {
 	if debugLevel > 0 && level <= debugLevel {
 		_, file, line, _ := runtime.Caller(1)
-		debugLogger.SetPrefix(fmt.Sprintf(prefixFormat, level, path.Base(file), line))
+		debugLogger.SetPrefix(fmt.Sprintf(prefixFmt, level, path.Base(file), line))
 		debugLogger.Printf(format, v...)
 	}
+}
+
+// Show a FUSE level debug message
+func FuseDebug(msg interface{}) {
+	Debug(4, fuseFmt, msg)
 }
 
 // Send debug message to syslog facility
@@ -66,7 +77,8 @@ func ToSyslog() {
 	syslogger, err := syslog.NewLogger(syslog.LOG_ERR|syslog.LOG_USER, 0)
 	if err == nil {
 		debugLogger = syslogger
-		prefixFormat = formatMap[false]
+		prefixFmt = formatMap[false]
+		fuseFmt = fuseFormatMap[false]
 	}
 }
 

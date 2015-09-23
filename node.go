@@ -41,7 +41,6 @@ func (n Node) String() string {
 
 func (n *Node) Attr(ctx context.Context, attr *fuse.Attr) error {
 	var st syscall.Stat_t
-	syscall.Lstat(n.path, &st)
 	if err := syscall.Lstat(n.path, &st); err != nil {
 		return osErrorToFuseError(err)
 	}
